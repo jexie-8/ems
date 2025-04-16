@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'createevent.dart'; // If you're using CreateEventPage
 
 class AdminDashboardPage extends StatelessWidget {
   const AdminDashboardPage({super.key});
@@ -18,12 +17,7 @@ class AdminDashboardPage extends StatelessWidget {
           children: <Widget>[
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CreateEventPage(),
-                  ),
-                );
+                print("");
               },
               child: const Text('Create Event'),
             ),
