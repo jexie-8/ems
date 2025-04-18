@@ -33,21 +33,21 @@ class AdminDashboardPage extends StatelessWidget {
               onPressed: () {
                 print("View Attendee button pressed");
               },
-              child: const Text('View Attendee'),
+              child: const Text('View/Edit Events'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 print("Manage Tickets button pressed");
               },
-              child: const Text("Manage Tickets"),
+              child: const Text("Vendor Managment"),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                print("Send notifications button pressed");
+                print("User Role Management");
               },
-              child: const Text("Send notifications"),
+              child: const Text("User-Role-Managment"),
             ),
           ],
         ),

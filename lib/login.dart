@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'admin_dashboard.dart'; // Admin Dashboard Page
+import 'admin_dashboard.dart'; // Admin Dashboard.
+import 'attendee.dart'; // Attendee Dashboard.
+import 'accountant_homepage.dart';// Accountant HomePage. 
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,22 +14,31 @@ class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
-
   void _login() {
-    String username = _usernameController.text;
-    String password = _passwordController.text;
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
 
-    // Replace this with your login logic or API call
-    if (username == "admin" && password == "password") {
-      setState(() {
-      });
-      // Navigate to the Admin Dashboard
+    // Check for Admin credentials
+    if (username == "admin" && password == "ad") {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const AdminDashboardPage()),
       );
-    } else {
-      // Show error if login fails
+    }
+    // Check for Attendee credentials
+    else if (username == "attendee" && password == "att") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AttendeeDashboard()),
+      );
+    } else if (username == "Accountant Homepage" && password == "acc") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AccountantHomepage()),
+      );
+    }
+    // Invalid credentials
+    else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Invalid username or password")),
       );
@@ -39,27 +50,37 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
-        backgroundColor: Colors.purpleAccent,
+        backgroundColor: Colors.purple,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
+          children: [
             TextField(
               controller: _usernameController,
-              decoration: const InputDecoration(labelText: 'Username'),
+              decoration: const InputDecoration(
+                labelText: 'Username',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: _passwordController,
               obscureText: true,
-              decoration: const InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+              ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
             ElevatedButton(
               onPressed: _login,
-              child: const Text('Login'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              child: const Text('Login', style: TextStyle(fontSize: 18)),
             ),
           ],
         ),
