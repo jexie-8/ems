@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // ✅ Import FirebaseAuth
-import '../event_creation_webpage.dart'; 
-import '../view_event_screen.dart';
+import '../event_functionality/event_creation_webpage.dart'; 
+import '../event_functionality/view_event_screen.dart';
 import '../login_page.dart';
 
 class AdminDashboard extends StatelessWidget {

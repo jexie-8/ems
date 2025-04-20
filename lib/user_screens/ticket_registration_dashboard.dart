@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../ticket_management.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../ticket_functionality/ticket_management.dart';
+import '../login_page.dart';
 
 class TicketRegistrationDashboard extends StatelessWidget {
   const TicketRegistrationDashboard({super.key});
@@ -9,6 +11,18 @@ class TicketRegistrationDashboard extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Tickets & Registration"),
+         actions: [ // ✅ Added sign out button
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut(); // ✅ Sign out logic
+              Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(

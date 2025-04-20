@@ -19,40 +19,92 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   DateTime? _startDateTime;
   DateTime? _endDateTime;
+Future<void> _createEvent() async {
+  final title = _titleController.text.trim();
+  final description = _descriptionController.text.trim();
+  final maxCapacity = int.tryParse(_maxCapacityController.text) ?? 0;
+  final status = _statusController.text.trim();
+  final budget = _budgetController.text.trim();
+  final ageRating = _ageRatingController.text.trim();
 
-  Future<void> _createEvent() async {
-    final maxCapacity = int.tryParse(_maxCapacityController.text) ?? 0;
-
-    if (maxCapacity > 500) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Max Capacity cannot exceed 500.")),
-      );
-      return;
-    }
-
-    final firestore = FirebaseFirestore.instance;
-    final eventRef = firestore.collection("events").doc();
-    final user = FirebaseAuth.instance.currentUser;
-
-    await eventRef.set({
-      "Event_ID": eventRef.id,
-      "Title": _titleController.text,
-      "Description": _descriptionController.text,
-      "Start_D/T": _startDateTime != null ? Timestamp.fromDate(_startDateTime!) : null,
-      "End_D/T": _endDateTime != null ? Timestamp.fromDate(_endDateTime!) : null,
-      "Max_capacity": maxCapacity,
-      "Status": _statusController.text,
-      "Budget": _budgetController.text,
-      "Age_Rating": _ageRatingController.text,
-      "createdBy": user?.email ?? "Unknown",
-      "createdAt": Timestamp.now(),
-    });
-
+  // ✅ Validation
+  if (title.isEmpty ||
+      description.isEmpty ||
+      status.isEmpty ||
+      budget.isEmpty ||
+      ageRating.isEmpty ||
+      _startDateTime == null ||
+      _endDateTime == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Event Created Successfully")),
+      const SnackBar(content: Text("Please fill in all fields and select start/end time.")),
     );
-    Navigator.pop(context); // Go back after creating event
+    return;
   }
+
+  if (maxCapacity <= 0) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Max Capacity must be a positive number.")),
+    );
+    return;
+  }
+
+  if (maxCapacity > 500) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Max Capacity cannot exceed 500.")),
+    );
+    return;
+  }
+
+  final firestore = FirebaseFirestore.instance;
+  final eventRef = firestore.collection("events").doc();
+  final user = FirebaseAuth.instance.currentUser;
+
+  final start = Timestamp.fromDate(_startDateTime!);
+  final end = Timestamp.fromDate(_endDateTime!);
+
+  // ✅ 1. Create the event
+  await eventRef.set({
+    "Event_ID": eventRef.id,
+    "Title": title,
+    "Description": description,
+    "Start_DT": start,
+    "End_DT": end,
+    "Max_capacity": maxCapacity,
+    "Status": status,
+    "Budget": budget,
+    "Age_Rating": ageRating,
+    "createdBy": user?.email ?? "Unknown",
+    "createdAt": Timestamp.now(),
+  });
+
+  // ✅ 2. Create the report document
+  await firestore.collection("reports").doc(eventRef.id).set({
+    "eventId": eventRef.id,
+    "eventName": title,
+    "generatedAt": Timestamp.now(),
+    "generatedBy": user?.email ?? "Unknown",
+    "feedbackPdfUrl": null,
+    "status": "awaiting_feedback",
+  });
+
+  // ✅ 3. Create and KEEP dummy _init doc in tickets subcollection
+  await firestore
+      .collection("events")
+      .doc(eventRef.id)
+      .collection("tickets")
+      .doc("_init")
+      .set({
+        "note": "This is a placeholder to initialize the tickets subcollection. Safe to ignore.",
+      });
+
+  // ✅ 4. Notify and go back
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Event Created Successfully")),
+  );
+  Navigator.pop(context);
+}
+
+
 
   Future<void> _pickDateTime(bool isStart) async {
     final pickedDate = await showDatePicker(

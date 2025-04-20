@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'user_screens/checkoutpage.dart';
+import '../checkout_functionality/checkoutpage.dart';
 
 class TicketSelectionPage extends StatefulWidget {
   final String eventId;

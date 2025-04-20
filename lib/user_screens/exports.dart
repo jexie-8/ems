@@ -1,6 +1,6 @@
-export 'upcoming_events.dart';
-export 'checkoutpage.dart';
-export 'purchased_tickets.dart';
+export '../event_functionality/upcoming_events.dart';
+export '../checkout_functionality/checkoutpage.dart';
+export '../ticket_functionality/purchased_tickets.dart';
 export 'user_management.dart';
 export 'accountant_dashboard.dart';
 export 'admin_dashboard.dart';

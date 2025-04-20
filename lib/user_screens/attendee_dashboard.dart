@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';  // Import for Firebase Auth
-import 'purchased_tickets.dart';  // Import Purchased Tickets page
-import 'upcoming_events.dart';  // Import Upcoming Events page
+import '../ticket_functionality/purchased_tickets.dart';  // Import Purchased Tickets page
+import '../event_functionality/upcoming_events.dart';  // Import Upcoming Events page
 import '../login_page.dart';
 
 class AttendeeDashboardPage extends StatelessWidget {
