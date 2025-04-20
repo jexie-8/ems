@@ -9,7 +9,7 @@ class AdminDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Logo Name'),
+        title: const Text('A.J.'),
         backgroundColor: Colors.purpleAccent,
       ),
       body: Center(

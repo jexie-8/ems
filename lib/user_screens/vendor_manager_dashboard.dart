@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'export.dart';
+import 'exports.dart';
 class VendorManagerDashboard extends StatelessWidget {
   const VendorManagerDashboard({super.key});
 

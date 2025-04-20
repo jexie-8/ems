@@ -89,15 +89,39 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return total;
   }
 
-  String generateQRCodeData() {
-    return "User: ${widget.userName}, Event: ${widget.eventId}, Tickets: ${widget.selectedTickets.toString()}";
-  }
+  // ✅ Updated: Pass eventTitle and ticketType to generate clean QR code text
+ Future<String> generateQRCodeData(String eventTitle, String ticketType) async {
+  // ✅ Step 1: Query Firestore for the attendee by email
+  final querySnapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .doc('Attendee')
+      .collection('attendees')
+      .where('email', isEqualTo: widget.userEmail)
+      .limit(1)
+      .get();
 
+  final doc = querySnapshot.docs.isNotEmpty ? querySnapshot.docs.first : null;
+  final firstName = doc?.data()['firstName'] ?? 'Unknown';
+  final lastName = doc?.data()['lastName'] ?? 'User';
+
+  // ✅ Step 2: Compose the QR code string
+  return "User: $firstName $lastName, Event: $eventTitle, Ticket Type: $ticketType";
+}
+
+
+  // ✅ Updated to fetch eventTitle once and pass it to QR code generator
   Future<void> updateTicketStatusAndGenerateQRCode() async {
     final ticketCollection = FirebaseFirestore.instance
         .collection('events')
         .doc(widget.eventId)
         .collection('tickets');
+
+    final eventSnapshot = await FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .get();
+    final eventData = eventSnapshot.data();
+    final eventTitle = eventData?['Title'] ?? 'Unknown'; // ✅
 
     for (var entry in widget.selectedTickets.entries) {
       if (entry.value > 0) {
@@ -114,7 +138,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             'ticket_status': 'sold',
             'payment_status': 'completed',
             'buyerID': widget.userEmail,
-            'QR_code': generateQRCodeData(),
+            'QR_code': await generateQRCodeData(eventTitle, entry.key), // ✅
           });
           updatedCount++;
         }
@@ -284,14 +308,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             final total = calculateTotal(widget.selectedTickets, prices);
-
                             await updateTicketStatusAndGenerateQRCode();
                             await createPaymentRecord(total);
+
+                            // ✅ Generate QR string using first non-zero ticket and event title
+                            final selectedType = widget.selectedTickets.entries.firstWhere((e) => e.value > 0).key;
+                            final qrString = await generateQRCodeData(event['Title'], selectedType); // ✅
 
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PaymentSuccessPage(qrCodeData: generateQRCodeData()),
+                                builder: (context) => PaymentSuccessPage(qrCodeData: qrString), // ✅
                               ),
                             );
                             Fluttertoast.showToast(msg: "Payment Successful!");

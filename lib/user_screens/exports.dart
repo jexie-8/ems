@@ -12,3 +12,4 @@ export 'security_safety_dashboard.dart';
 export 'technician_dashboard.dart';
 export 'ticket_registration_dashboard.dart';
 export 'vendor_manager_dashboard.dart';
+export 'vendor_management_page.dart';
