@@ -1,3 +1,4 @@
+import 'package:ems/user_management/user_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // ✅ Import FirebaseAuth
 import '../event_functionality/event_creation_webpage.dart'; 
@@ -33,6 +34,7 @@ class AdminDashboard extends StatelessWidget {
             dashboardButton(context, 'Create Event'),
             dashboardButton(context, 'View Events'),
             dashboardButton(context, 'View Attendee'),
+            dashboardButton(context, 'View Users'),
             dashboardButton(context, 'Manage Tickets'),
             dashboardButton(context, 'Send notifications'),
           ],
@@ -56,6 +58,12 @@ class AdminDashboard extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ViewEventsScreen()),
+            );
+          }
+          if (text == 'View Users') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const UserViewScreen()),
             );
           }
         },
