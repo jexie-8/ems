@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';  // Import for Firebase Auth
 import 'purchased_tickets.dart';  // Import Purchased Tickets page
-import 'attendee_upcoming_events.dart';  // Import Upcoming Events page
+import 'upcoming_events.dart';  // Import Upcoming Events page
+import '../login_page.dart';
 
 class AttendeeDashboardPage extends StatelessWidget {
   const AttendeeDashboardPage({super.key});
@@ -19,6 +20,18 @@ class AttendeeDashboardPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Attendee Dashboard'),
         backgroundColor: Colors.deepPurple,
+        actions: [ // ✅ Added sign out button
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut(); // ✅ Sign out logic
+              Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) =>  LoginScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),

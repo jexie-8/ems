@@ -1,4 +1,4 @@
-export 'attendee_upcoming_events.dart';
+export 'upcoming_events.dart';
 export 'checkoutpage.dart';
 export 'purchased_tickets.dart';
 export 'user_management.dart';

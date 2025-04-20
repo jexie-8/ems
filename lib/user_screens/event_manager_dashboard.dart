@@ -3,6 +3,8 @@ import '../event_creation_webpage.dart';
 import 'user_management.dart';
 import 'vendor_management_page.dart';
 import 'vendor_form_page.dart';
+import '../login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class EventManagerDashboard extends StatelessWidget {
   const EventManagerDashboard({super.key});
@@ -13,6 +15,18 @@ class EventManagerDashboard extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Logo Name'),
         backgroundColor: Colors.purpleAccent,
+        actions: [ // ✅ Added sign out button
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut(); // ✅ Sign out logic
+              Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(

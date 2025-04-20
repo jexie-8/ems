@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'event_creation_webpage.dart'; 
-import 'user_screens/event_manager_dashboard.dart';
-import 'user_screens/attendee_dashboard.dart';
-import 'login_page.dart';
+import 'splash_screen.dart';
 
 // Define your Firebase configuration using FirebaseOptions
 const firebaseConfig = FirebaseOptions(
@@ -34,7 +31,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.indigo,
       ),
-      home: const LoginScreen(),
+      home: const SessionHandler(),
     );
   }
 }

@@ -106,7 +106,7 @@ return ListView.builder(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Event: ${ticket['eventTitle']}',
+              '${ticket['eventTitle']}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),

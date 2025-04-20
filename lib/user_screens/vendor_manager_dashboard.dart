@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'exports.dart';
+import '../login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 class VendorManagerDashboard extends StatelessWidget {
   const VendorManagerDashboard({super.key});
 
@@ -10,6 +12,18 @@ class VendorManagerDashboard extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Logo Name'),
         backgroundColor: Colors.purpleAccent,
+        actions: [ // ✅ Added sign out button
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut(); // ✅ Sign out logic
+              Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(

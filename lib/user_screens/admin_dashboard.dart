@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // ✅ Import FirebaseAuth
 import '../event_creation_webpage.dart'; 
 import '../view_event_screen.dart';
+import '../login_page.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -11,12 +13,23 @@ class AdminDashboard extends StatelessWidget {
       appBar: AppBar(
         title: const Text('A.J.'),
         backgroundColor: Colors.purpleAccent,
+        actions: [ // ✅ Added sign out button
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut(); // ✅ Sign out logic
+              Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // The Create Event button
             dashboardButton(context, 'Create Event'),
             dashboardButton(context, 'View Events'),
             dashboardButton(context, 'View Attendee'),
@@ -28,21 +41,18 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  // Updated dashboardButton function that accepts context and navigates on press
   Widget dashboardButton(BuildContext context, String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: ElevatedButton(
         onPressed: () {
           if (text == 'Create Event') {
-         
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const CreateEventScreen()),
             );
           }
           if (text == 'View Events') {
-         
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ViewEventsScreen()),
