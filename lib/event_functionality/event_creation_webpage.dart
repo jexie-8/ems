@@ -78,7 +78,7 @@ Future<void> _createEvent() async {
   });
 
   // ✅ 2. Create the report document
-  await firestore.collection("reports").doc(eventRef.id).set({
+  await firestore.collection("report").doc("${title}, ${eventRef.id}").set({
     "eventId": eventRef.id,
     "eventName": title,
     "generatedAt": Timestamp.now(),
@@ -96,7 +96,14 @@ Future<void> _createEvent() async {
       .set({
         "note": "This is a placeholder to initialize the tickets subcollection. Safe to ignore.",
       });
-
+  await firestore
+    .collection("events")
+    .doc(eventRef.id)
+    .collection("feedback")
+    .doc("_init")
+    .set({
+      "note": "This is a placeholder to initialize the feedback subcollection. Safe to ignore.",
+    });
   // ✅ 4. Notify and go back
   ScaffoldMessenger.of(context).showSnackBar(
     const SnackBar(content: Text("Event Created Successfully")),

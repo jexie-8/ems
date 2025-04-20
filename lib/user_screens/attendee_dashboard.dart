@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';  // Import for Firebase Auth
-import '../ticket_functionality/purchased_tickets.dart';  // Import Purchased Tickets page
-import '../event_functionality/upcoming_events.dart';  // Import Upcoming Events page
+import 'package:firebase_auth/firebase_auth.dart';
+import '../ticket_functionality/purchased_tickets.dart';
+import '../event_functionality/upcoming_events.dart';
 import '../login_page.dart';
+import 'feedback_page.dart'; // ✅ Import Feedback Page
 
 class AttendeeDashboardPage extends StatelessWidget {
   const AttendeeDashboardPage({super.key});
@@ -20,14 +21,14 @@ class AttendeeDashboardPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Attendee Dashboard'),
         backgroundColor: Colors.deepPurple,
-        actions: [ // ✅ Added sign out button
+        actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await FirebaseAuth.instance.signOut(); // ✅ Sign out logic
+              await FirebaseAuth.instance.signOut();
               Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) =>  LoginScreen()),
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
               );
             },
           ),
@@ -50,7 +51,7 @@ class AttendeeDashboardPage extends StatelessWidget {
               icon: Icons.feedback,
               label: 'Feedback',
               onPressed: () {
-                navigate(context, const PlaceholderPage(title: 'Feedback'));
+                navigate(context, const FeedbackPage()); // ✅ Feedback page button
               },
             ),
             const SizedBox(height: 20),
@@ -58,10 +59,7 @@ class AttendeeDashboardPage extends StatelessWidget {
               icon: Icons.confirmation_number,
               label: 'Purchased Tickets',
               onPressed: () {
-                // Get the user ID from Firebase Auth
-                String userId = FirebaseAuth.instance.currentUser?.uid ?? ''; 
-                
-                // Navigate to the PurchasedTicketsPage with the userId
+                String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
                 navigate(context, PurchasedTicketsPage(userId: userId));
               },
             ),
@@ -96,25 +94,6 @@ class DashboardButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       ),
       onPressed: onPressed,
-    );
-  }
-}
-
-class PlaceholderPage extends StatelessWidget {
-  final String title;
-
-  const PlaceholderPage({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: Center(
-        child: Text('$title page coming soon!', style: const TextStyle(fontSize: 20)),
-      ),
     );
   }
 }
