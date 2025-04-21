@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'splash_screen.dart';
 
 // Define your Firebase configuration using FirebaseOptions
@@ -29,7 +30,9 @@ class MyApp extends StatelessWidget {
       title: 'A.J.',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.indigo,
+        textTheme: GoogleFonts.poppinsTextTheme(
+          Theme.of(context).textTheme,
+        )
       ),
       home: const SessionHandler(),
     );

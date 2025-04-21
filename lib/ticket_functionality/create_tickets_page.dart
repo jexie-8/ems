@@ -11,50 +11,90 @@ class CreateTicketsPage extends StatefulWidget {
 }
 
 class _CreateTicketsPageState extends State<CreateTicketsPage> {
-  final TextEditingController _ticketCountController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
-  final TextEditingController _typeController = TextEditingController();
+  final TextEditingController _typeCountController = TextEditingController();
+  List<Map<String, TextEditingController>> _ticketInputs = [];
 
-  Future<void> _createTickets() async {
-    final int? count = int.tryParse(_ticketCountController.text.trim());
-    final double? price = double.tryParse(_priceController.text.trim());
-    final String ticketType = _typeController.text.trim();
+  void _generateTicketInputs() {
+    final int? typeCount = int.tryParse(_typeCountController.text.trim());
 
-    if (count == null || price == null || ticketType.isEmpty || count <= 0 || price < 0) {
+    if (typeCount == null || typeCount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter valid ticket count, price, and type.")),
+        const SnackBar(content: Text("Enter a valid number of ticket types.")),
       );
       return;
     }
 
+    _ticketInputs = List.generate(typeCount, (_) {
+      return {
+        'type': TextEditingController(),
+        'amount': TextEditingController(),
+        'price': TextEditingController(),
+      };
+    });
+
+    setState(() {});
+  }
+
+  Future<void> _createTicketsAndSaveTypes() async {
+    List<Map<String, dynamic>> ticketTypeData = [];
     final WriteBatch batch = FirebaseFirestore.instance.batch();
     final ticketsRef = FirebaseFirestore.instance
         .collection('events')
         .doc(widget.eventId)
         .collection('tickets');
 
-    for (int i = 0; i < count; i++) {
-      final newDoc = ticketsRef.doc();
-      batch.set(newDoc, {
-        'QR_code': '',
-        'buyerID': '',
-        'payment_status': '',
-        'ticket_status': 'available',
-        'ticket_type': ticketType,
-        'price': price,
-        'createdAt': FieldValue.serverTimestamp(),
+    for (var input in _ticketInputs) {
+      final String type = input['type']!.text.trim();
+      final int? amount = int.tryParse(input['amount']!.text.trim());
+      final double? price = double.tryParse(input['price']!.text.trim());
+
+      if (type.isEmpty || amount == null || price == null || amount <= 0 || price < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please fill in all fields correctly.")),
+        );
+        return;
+      }
+
+      // Store ticket type metadata
+      ticketTypeData.add({
+        "type": type,
+        "amount": amount,
+        "price": price,
       });
+
+      // Generate actual tickets
+      for (int i = 0; i < amount; i++) {
+        final newDoc = ticketsRef.doc();
+        batch.set(newDoc, {
+          'QR_code': '',
+          'buyerID': '',
+          'payment_status': '',
+          'ticket_status': 'available',
+          'ticket_type': type,
+          'price': price,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
     }
 
+    // Commit ticket creation
     await batch.commit();
 
+    // Save ticketTypes array to the event document
+    await FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .update({"ticketTypes": ticketTypeData});
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("$count tickets created successfully")),
+      const SnackBar(content: Text("Tickets created and types saved successfully")),
     );
 
-    _ticketCountController.clear();
-    _priceController.clear();
-    _typeController.clear();
+    // Reset
+    _typeCountController.clear();
+    setState(() {
+      _ticketInputs = [];
+    });
   }
 
   @override
@@ -63,35 +103,49 @@ class _CreateTicketsPageState extends State<CreateTicketsPage> {
       appBar: AppBar(title: const Text("Create Tickets")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: ListView(
           children: [
             TextField(
-              controller: _ticketCountController,
+              controller: _typeCountController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Number of Tickets",
-              ),
+              decoration: const InputDecoration(labelText: "How many ticket types?"),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _priceController,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: "Price per Ticket",
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _typeController,
-              decoration: const InputDecoration(
-                labelText: "Ticket Type (e.g. VIP, Standard)",
-              ),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: _createTickets,
-              child: const Text("Generate Tickets"),
+              onPressed: _generateTicketInputs,
+              child: const Text("Set Ticket Types"),
             ),
+            const SizedBox(height: 20),
+            ..._ticketInputs.asMap().entries.map((entry) {
+              int index = entry.key;
+              var input = entry.value;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Ticket Type ${index + 1}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  TextField(
+                    controller: input['type'],
+                    decoration: const InputDecoration(labelText: "Type (e.g. VIP, Regular)"),
+                  ),
+                  TextField(
+                    controller: input['amount'],
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: "Amount"),
+                  ),
+                  TextField(
+                    controller: input['price'],
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: "Price"),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
+            }).toList(),
+            if (_ticketInputs.isNotEmpty)
+              ElevatedButton(
+                onPressed: _createTicketsAndSaveTypes,
+                child: const Text("Generate All Tickets"),
+              ),
           ],
         ),
       ),

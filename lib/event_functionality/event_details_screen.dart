@@ -2,27 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'edit_event_screen.dart';
-
+import '../ticket_functionality/view_tickets_page.dart';
+import '../view_report.dart';
 class EventDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> event;
   final String docID;
+
   const EventDetailsScreen({super.key, required this.event, required this.docID});
-  
+
   Future<String?> _getUserRole() async {
     final email = FirebaseAuth.instance.currentUser?.email;
     if (email == null) return null;
-  final Map<String, List<String>> rolePaths = {
-    'Admin': ['admins', 'admin_users'],
-    'Attendee': ['Attendee', 'attendees'],
-    'Client': ['Client', 'clients'],
-    'Event_Manager': ['employees', 'event_manager'],
-    'Accountant': ['employees', 'Accountant'],
-    'Custodian': ['employees', 'Custodian'],
-    'Security_Safety': ['employees', 'Security_Safety'],
-    'Technical_Logistics': ['employees', 'Technical_Logistics'],
-    'Tickets_Registration': ['employees', 'ticketeers'],
-    'Vendor_Manager': ['employees', 'Vendor_Manager'],
-  };
+
+    final Map<String, List<String>> rolePaths = {
+      'Admin': ['admins', 'admin_users'],
+      'Attendee': ['Attendee', 'attendees'],
+      'Client': ['Client', 'clients'],
+      'Event_Manager': ['employees', 'event_manager'],
+      'Accountant': ['employees', 'Accountant'],
+      'Custodian': ['employees', 'Custodian'],
+      'Security_Safety': ['employees', 'Security_Safety'],
+      'Technical_Logistics': ['employees', 'Technical_Logistics'],
+      'Tickets_Registration': ['employees', 'ticketeers'],
+      'Vendor_Manager': ['employees', 'Vendor_Manager'],
+    };
 
     for (var entry in rolePaths.entries) {
       final snapshot = await FirebaseFirestore.instance
@@ -49,52 +52,92 @@ class EventDetailsScreen extends StatelessWidget {
           .limit(1)
           .get();
 
-      if (query.docs.isNotEmpty) {
-        await query.docs.first.reference.delete();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Event deleted successfully")),
-        );
-
-          Navigator.of(context).pop();
-               
-      } else {
+      if (query.docs.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Event not found")),
         );
+        return;
       }
+
+      final eventDoc = query.docs.first;
+      final eventId = eventDoc.id;
+      final eventTitle = event["Title"];
+      final reportId = "$eventId, $eventTitle";
+
+      // Helper to delete event subcollections
+      Future<void> deleteEventSubcollection(String subcollection) async {
+        final subDocs = await FirebaseFirestore.instance
+            .collection("events")
+            .doc(eventId)
+            .collection(subcollection)
+            .get();
+
+        for (var doc in subDocs.docs) {
+          await doc.reference.delete();
+        }
+      }
+
+      // Helper to delete report subcollections
+      Future<void> deleteReportSubcollection(String subcollection) async {
+        final subDocs = await FirebaseFirestore.instance
+            .collection("report")
+            .doc(reportId)
+            .collection(subcollection)
+            .get();
+
+        for (var doc in subDocs.docs) {
+          await doc.reference.delete();
+        }
+      }
+
+      // Step 1: Delete tickets from event
+      await deleteEventSubcollection("tickets");
+
+      // Step 2: Delete feedback and payments from report
+      await deleteReportSubcollection("feedback");
+      await deleteReportSubcollection("payments");
+
+      // Step 3: Delete event document
+      await eventDoc.reference.delete();
+
+      // Step 4: Delete report document
+      await FirebaseFirestore.instance.collection("report").doc(reportId).delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Event and all related data deleted")),
+      );
+
+      Navigator.of(context).pop();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error deleting event: $e")),
       );
     }
   }
+
   void _showDeleteConfirmation(BuildContext screenContext) {
-  showDialog(
-    context: screenContext,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text("Delete Event"),
-      content: const Text("Are you sure you want to delete this event?"),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext), // Close dialog only
-          child: const Text("Cancel"),
-        ),
-        ElevatedButton(
-          onPressed: () async {
-            Navigator.pop(dialogContext); // Close dialog
-            await _deleteEvent(screenContext); // Pop EventDetailsScreen
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-          child: const Text("Delete", style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    ),
-  );
-}
-
-
-
+    showDialog(
+      context: screenContext,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text("Delete Event"),
+        content: const Text("Are you sure you want to delete this event?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await _deleteEvent(screenContext);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Delete", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
   String _formatBudget(dynamic budget) {
     if (budget is num) {
@@ -168,6 +211,30 @@ class EventDetailsScreen extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (_) => EditEventScreen(event: event, docId: docID),
+                            ),
+                          );
+                        },
+                      ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.receipt),
+                        label: const Text("Tickets"),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ViewTicketsPage(eventId:docID),
+                            ),
+                          );
+                        },
+                      ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.request_page_outlined),
+                        label: const Text("Report"),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                              MaterialPageRoute(
+                                builder: (_) => ReportPage(eventId:docID),
                             ),
                           );
                         },

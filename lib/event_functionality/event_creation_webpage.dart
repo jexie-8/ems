@@ -77,15 +77,28 @@ Future<void> _createEvent() async {
     "createdAt": Timestamp.now(),
   });
 
-  // ✅ 2. Create the report document
-  await firestore.collection("report").doc("${title}, ${eventRef.id}").set({
-    "eventId": eventRef.id,
-    "eventName": title,
-    "generatedAt": Timestamp.now(),
-    "generatedBy": user?.email ?? "Unknown",
-    "feedbackPdfUrl": null,
-    "status": "awaiting_feedback",
-  });
+  final reportDocRef = firestore.collection("report").doc("${eventRef.id}, ${title}");
+
+// Step 1: Create the report document
+await reportDocRef.set({
+  "eventId": eventRef.id,
+  "eventName": title,
+  "generatedAt": Timestamp.now(),
+  "generatedBy": user?.email ?? "Unknown",
+  "status": "awaiting_feedback",
+});
+
+// Step 2: Initialize payments subcollection
+await reportDocRef.collection("payments").doc("_init").set({
+  "initialized": true,
+  "createdAt": Timestamp.now(),
+});
+
+// Step 3: Initialize feedback subcollection
+await reportDocRef.collection("feedback").doc("_init").set({
+  "initialized": true,
+  "createdAt": Timestamp.now(),
+});
 
   // ✅ 3. Create and KEEP dummy _init doc in tickets subcollection
   await firestore

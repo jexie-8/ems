@@ -6,13 +6,11 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/services.dart';
 import 'payment_success.dart';
 
-// Custom input formatter for card number
 class CardNumberInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
     final digitsOnly = newValue.text.replaceAll(RegExp(r'\D'), '');
-
     final newString = StringBuffer();
     for (int i = 0; i < digitsOnly.length; i++) {
       newString.write(digitsOnly[i]);
@@ -20,7 +18,6 @@ class CardNumberInputFormatter extends TextInputFormatter {
         newString.write(' ');
       }
     }
-
     final selectionIndex = newString.length;
     return TextEditingValue(
       text: newString.toString(),
@@ -29,21 +26,17 @@ class CardNumberInputFormatter extends TextInputFormatter {
   }
 }
 
-// Custom input formatter for expiry date
 class ExpiryDateInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-
     if (text.length > 4) text = text.substring(0, 4);
-
     final buffer = StringBuffer();
     for (int i = 0; i < text.length; i++) {
       if (i == 2) buffer.write('/');
       buffer.write(text[i]);
     }
-
     return TextEditingValue(
       text: buffer.toString(),
       selection: TextSelection.collapsed(offset: buffer.length),
@@ -76,8 +69,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final _cvvController = TextEditingController();
 
   Future<Map<String, dynamic>> fetchEventDetails(String eventId) async {
-    final eventSnapshot =
-        await FirebaseFirestore.instance.collection('events').doc(eventId).get();
+    final eventSnapshot = await FirebaseFirestore.instance
+        .collection('events')
+        .doc(eventId)
+        .get();
     return eventSnapshot.data()!;
   }
 
@@ -89,39 +84,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return total;
   }
 
-  // ✅ Updated: Pass eventTitle and ticketType to generate clean QR code text
- Future<String> generateQRCodeData(String eventTitle, String ticketType) async {
-  // ✅ Step 1: Query Firestore for the attendee by email
-  final querySnapshot = await FirebaseFirestore.instance
-      .collection('users')
-      .doc('Attendee')
-      .collection('attendees')
-      .where('email', isEqualTo: widget.userEmail)
-      .limit(1)
-      .get();
+  Future<String> generateQRCodeData(String eventTitle, String ticketType) async {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc('Attendee')
+        .collection('attendees')
+        .where('email', isEqualTo: widget.userEmail)
+        .limit(1)
+        .get();
 
-  final doc = querySnapshot.docs.isNotEmpty ? querySnapshot.docs.first : null;
-  final firstName = doc?.data()['firstName'] ?? 'Unknown';
-  final lastName = doc?.data()['lastName'] ?? 'User';
+    final doc = querySnapshot.docs.isNotEmpty ? querySnapshot.docs.first : null;
+    final firstName = doc?.data()['firstName'] ?? 'Unknown';
+    final lastName = doc?.data()['lastName'] ?? 'User';
 
-  // ✅ Step 2: Compose the QR code string
-  return "User: $firstName $lastName, Event: $eventTitle, Ticket Type: $ticketType";
-}
+    return "User: $firstName $lastName, Event: $eventTitle, Ticket Type: $ticketType";
+  }
 
-
-  // ✅ Updated to fetch eventTitle once and pass it to QR code generator
-  Future<void> updateTicketStatusAndGenerateQRCode() async {
+  Future<void> updateTicketStatusAndGenerateQRCode(String eventTitle) async {
     final ticketCollection = FirebaseFirestore.instance
         .collection('events')
         .doc(widget.eventId)
         .collection('tickets');
-
-    final eventSnapshot = await FirebaseFirestore.instance
-        .collection('events')
-        .doc(widget.eventId)
-        .get();
-    final eventData = eventSnapshot.data();
-    final eventTitle = eventData?['Title'] ?? 'Unknown'; // ✅
 
     for (var entry in widget.selectedTickets.entries) {
       if (entry.value > 0) {
@@ -138,14 +121,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
             'ticket_status': 'sold',
             'payment_status': 'completed',
             'buyerID': widget.userEmail,
-            'QR_code': await generateQRCodeData(eventTitle, entry.key), // ✅
+            'event_id': widget.eventId,
+            'QR_code': await generateQRCodeData(eventTitle, entry.key),
           });
           updatedCount++;
         }
 
         if (updatedCount < entry.value) {
           Fluttertoast.showToast(
-            msg: "Only $updatedCount ${entry.key} ticket(s) were available and purchased.",
+            msg:
+                "Only $updatedCount ${entry.key} ticket(s) were available and purchased.",
             toastLength: Toast.LENGTH_LONG,
           );
         }
@@ -153,16 +138,26 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
-  Future<void> createPaymentRecord(int totalAmount) async {
-    final paymentCollection = FirebaseFirestore.instance.collection('payments');
+  Future<void> createPaymentRecord(int totalAmount, String eventTitle) async {
+    final reportId = "${widget.eventId}, $eventTitle";
+    final reportRef =
+        FirebaseFirestore.instance.collection('report').doc(reportId);
 
-    await paymentCollection.add({
+    final reportSnap = await reportRef.get();
+    if (!reportSnap.exists) {
+      Fluttertoast.showToast(msg: "No matching report found for this event.");
+      return;
+    }
+
+    await reportRef.collection('payments').add({
       'amount': totalAmount,
       'ticket_bought': widget.selectedTickets.entries
           .where((e) => e.value > 0)
           .map((e) => {'type': e.key, 'quantity': e.value})
           .toList(),
       'user_email': widget.userEmail,
+      'event_id': widget.eventId,
+      'event_title': eventTitle,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
@@ -198,12 +193,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, int> prices = {
-      'VIP': 1500,
-      'Fanpit': 850,
-      'Regular': 500,
-    };
-
     return Scaffold(
       appBar: AppBar(title: Text('Checkout')),
       body: FutureBuilder<Map<String, dynamic>>(
@@ -218,37 +207,41 @@ class _CheckoutPageState extends State<CheckoutPage> {
           }
 
           final event = snapshot.data!;
+          final eventTitle = event['Title'];
+
+          final List ticketTypes = event['ticketTypes'] ?? [];
+          final Map<String, int> prices = {
+            for (var ticket in ticketTypes)
+              ticket['type']: (ticket['price'] as num).toInt(),
+          };
+
           final total = calculateTotal(widget.selectedTickets, prices);
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: ListView(
               children: [
-                Text(
-                  'Event Summary',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
+                Text('Event Summary',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 SizedBox(height: 10),
-                Text('Title: ${event['Title']}'),
-                Text('Date: ${DateFormat.yMMMd().add_jm().format(event['Start_DT'].toDate())}'),
+                Text('Title: $eventTitle'),
+                Text(
+                    'Date: ${DateFormat.yMMMd().add_jm().format(event['Start_DT'].toDate())}'),
                 Text('Description: ${event['Description']}'),
                 Divider(height: 30),
 
-                Text(
-                  'Ticket Summary',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
+                Text('Ticket Summary',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 ...widget.selectedTickets.entries.map((entry) {
                   return entry.value > 0
-                      ? Text('${entry.key} x ${entry.value} - ${prices[entry.key]! * entry.value} EGP')
+                      ? Text(
+                          '${entry.key} x ${entry.value} - ${prices[entry.key]! * entry.value} EGP')
                       : SizedBox.shrink();
                 }).toList(),
                 Divider(height: 30),
 
-                Text(
-                  'Payment Information',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
+                Text('Payment Information',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 SizedBox(height: 10),
 
                 Form(
@@ -257,7 +250,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     children: [
                       TextFormField(
                         controller: _cardController,
-                        decoration: InputDecoration(labelText: 'Card Number', border: OutlineInputBorder()),
+                        decoration: InputDecoration(
+                            labelText: 'Card Number',
+                            border: OutlineInputBorder()),
                         keyboardType: TextInputType.number,
                         inputFormatters: [CardNumberInputFormatter()],
                         validator: (value) {
@@ -274,7 +269,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           Expanded(
                             child: TextFormField(
                               controller: _expiryController,
-                              decoration: InputDecoration(labelText: 'Expiry Date', hintText: 'MM/YY', border: OutlineInputBorder()),
+                              decoration: InputDecoration(
+                                  labelText: 'Expiry Date',
+                                  hintText: 'MM/YY',
+                                  border: OutlineInputBorder()),
                               keyboardType: TextInputType.datetime,
                               inputFormatters: [ExpiryDateInputFormatter()],
                               validator: (value) {
@@ -289,7 +287,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           Expanded(
                             child: TextFormField(
                               controller: _cvvController,
-                              decoration: InputDecoration(labelText: 'CVV', border: OutlineInputBorder()),
+                              decoration: InputDecoration(
+                                  labelText: 'CVV',
+                                  border: OutlineInputBorder()),
                               keyboardType: TextInputType.number,
                               obscureText: true,
                               maxLength: 3,
@@ -307,23 +307,33 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       ElevatedButton(
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
-                            final total = calculateTotal(widget.selectedTickets, prices);
-                            await updateTicketStatusAndGenerateQRCode();
-                            await createPaymentRecord(total);
+                            try {
+                              await updateTicketStatusAndGenerateQRCode(
+                                  eventTitle);
+                              await createPaymentRecord(total, eventTitle);
 
-                            // ✅ Generate QR string using first non-zero ticket and event title
-                            final selectedType = widget.selectedTickets.entries.firstWhere((e) => e.value > 0).key;
-                            final qrString = await generateQRCodeData(event['Title'], selectedType); // ✅
+                              final selectedType = widget.selectedTickets.entries
+                                  .firstWhere((e) => e.value > 0)
+                                  .key;
+                              final qrString = await generateQRCodeData(
+                                  eventTitle, selectedType);
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PaymentSuccessPage(qrCodeData: qrString), // ✅
-                              ),
-                            );
-                            Fluttertoast.showToast(msg: "Payment Successful!");
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      PaymentSuccessPage(qrCodeData: qrString),
+                                ),
+                              );
+                              Fluttertoast.showToast(
+                                  msg: "Payment Successful!");
+                            } catch (e) {
+                              Fluttertoast.showToast(msg: "Error: $e");
+                              print("❌ Error during payment: $e");
+                            }
                           } else {
-                            Fluttertoast.showToast(msg: "Invalid payment info");
+                            Fluttertoast.showToast(
+                                msg: "Invalid payment info");
                           }
                         },
                         child: Text('Pay Now'),

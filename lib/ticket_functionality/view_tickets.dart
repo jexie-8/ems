@@ -13,63 +13,52 @@ class TicketSelectionPage extends StatefulWidget {
 }
 
 class _TicketSelectionPageState extends State<TicketSelectionPage> {
-  Map<String, int> availableTickets = {
-    'VIP': 0,
-    'Fanpit': 0,
-    'Regular': 0,
-  };
-  Map<String, int> selectedTickets = {
-    'VIP': 0,
-    'Fanpit': 0,
-    'Regular': 0,
-  };
-  Map<String, int> prices = {}; // Removed default values
+  Map<String, int> availableTickets = {};
+  Map<String, int> selectedTickets = {};
+  Map<String, int> prices = {};
+  List<String> ticketTypes = [];
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchAvailableTicketsAndPrices();
+    fetchTicketData();
   }
 
-  Future<void> fetchAvailableTicketsAndPrices() async {
+  Future<void> fetchTicketData() async {
     try {
-      final eventId = widget.eventId;
-      final snapshot = await FirebaseFirestore.instance
+      final eventDoc = await FirebaseFirestore.instance
           .collection('events')
-          .doc(eventId)
+          .doc(widget.eventId)
+          .get();
+
+      final List<dynamic> types = eventDoc.data()?['ticketTypes'] ?? [];
+      ticketTypes = types.map((e) => e['type'].toString()).toList();
+
+      for (var type in types) {
+        prices[type['type']] = (type['price'] as num).toInt();
+        selectedTickets[type['type']] = 0;
+        availableTickets[type['type']] = 0;
+      }
+
+      final availableSnapshot = await FirebaseFirestore.instance
+          .collection('events')
+          .doc(widget.eventId)
           .collection('tickets')
           .where('ticket_status', isEqualTo: 'available')
           .get();
 
-      Map<String, int> typeCounters = {
-        'VIP': 0,
-        'Fanpit': 0,
-        'Regular': 0,
-      };
-
-      Map<String, int> typePrices = {};
-
-      for (var doc in snapshot.docs) {
-        var data = doc.data() as Map<String, dynamic>;
-        String type = data['ticket_type'] ?? '';
-        int price = data['price'] ?? 0;
-
-        if (typeCounters.containsKey(type)) {
-          typeCounters[type] = typeCounters[type]! + 1;
-
-          // If this ticket type's price is not yet recorded, set it
-          if (!typePrices.containsKey(type)) {
-            typePrices[type] = price;
-          }
+      for (var doc in availableSnapshot.docs) {
+        final data = doc.data();
+        final type = data['ticket_type'];
+        if (availableTickets.containsKey(type)) {
+          availableTickets[type] = availableTickets[type]! + 1;
         }
       }
 
-      setState(() {
-        availableTickets = typeCounters;
-        prices = typePrices;
-      });
+      setState(() => _loading = false);
     } catch (e) {
-      print("Error fetching available tickets and prices: $e");
+      print("Error: $e");
     }
   }
 
@@ -83,7 +72,7 @@ class _TicketSelectionPageState extends State<TicketSelectionPage> {
 
   Widget buildTicketBox(String type) {
     return Card(
-      margin: EdgeInsets.all(12),
+      margin: const EdgeInsets.all(12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -93,44 +82,27 @@ class _TicketSelectionPageState extends State<TicketSelectionPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  type,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  prices.containsKey(type) ? '${prices[type]} EGP' : '-- EGP',
-                  style: TextStyle(fontSize: 16),
-                ),
+                Text(type, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text(prices.containsKey(type) ? '${prices[type]} EGP' : '-- EGP'),
               ],
             ),
-            SizedBox(height: 10),
-            Text(
-              'Available tickets: ${availableTickets[type] ?? 'N/A'}',
-              style: TextStyle(fontSize: 14),
-            ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
+            Text('Available tickets: ${availableTickets[type] ?? 0}'),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 IconButton(
-                  icon: Icon(Icons.remove),
+                  icon: const Icon(Icons.remove),
                   onPressed: selectedTickets[type]! > 0
-                      ? () {
-                          setState(() {
-                            selectedTickets[type] = selectedTickets[type]! - 1;
-                          });
-                        }
+                      ? () => setState(() => selectedTickets[type] = selectedTickets[type]! - 1)
                       : null,
                 ),
                 Text('${selectedTickets[type]}'),
                 IconButton(
-                  icon: Icon(Icons.add),
+                  icon: const Icon(Icons.add),
                   onPressed: (availableTickets[type] ?? 0) > selectedTickets[type]!
-                      ? () {
-                          setState(() {
-                            selectedTickets[type] = selectedTickets[type]! + 1;
-                          });
-                        }
+                      ? () => setState(() => selectedTickets[type] = selectedTickets[type]! + 1)
                       : null,
                 ),
               ],
@@ -147,65 +119,62 @@ class _TicketSelectionPageState extends State<TicketSelectionPage> {
     final userName = FirebaseAuth.instance.currentUser?.displayName ?? "Anonymous";
 
     return Scaffold(
-      appBar: AppBar(title: Text('Select Tickets')),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
+      appBar: AppBar(title: const Text('Select Tickets')),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
-                buildTicketBox('VIP'),
-                buildTicketBox('Fanpit'),
-                buildTicketBox('Regular'),
-              ],
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(color: Colors.white, boxShadow: [
-              BoxShadow(color: Colors.black12, blurRadius: 4),
-            ]),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total: ${calculateTotal()} EGP',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Expanded(
+                  child: ListView(
+                    children: ticketTypes.map(buildTicketBox).toList(),
+                  ),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    bool hasTickets = selectedTickets.values.any((v) => v > 0);
-                    if (!hasTickets) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Please select at least one ticket.")),
-                      );
-                      return;
-                    }
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CheckoutPage(
-                          eventId: widget.eventId,
-                          selectedTickets: selectedTickets,
-                          userName: userName,
-                          userEmail: userEmail,
-                        ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Total: ${calculateTotal()} EGP',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                    );
-                  },
-                  child: Text('Checkout'),
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      ElevatedButton(
+                        onPressed: () {
+                          bool hasTickets = selectedTickets.values.any((v) => v > 0);
+                          if (!hasTickets) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Please select at least one ticket.")),
+                            );
+                            return;
+                          }
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CheckoutPage(
+                                eventId: widget.eventId,
+                                selectedTickets: selectedTickets,
+                                userName: userName,
+                                userEmail: userEmail,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Checkout'),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }

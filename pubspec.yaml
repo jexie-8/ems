@@ -13,9 +13,11 @@ dependencies:
   firebase_core: ^3.13.0
   cloud_firestore: ^5.6.6
   firebase_auth: ^5.5.2
+  google_fonts: ^6.1.0
   js: ^0.7.2   
   intl: ^0.18.1 
   fluttertoast: ^8.0.9
+  dynamic_background: ^0.5.0
   qr_flutter:
     git:
       url: https://github.com/theyakka/qr.flutter.git
@@ -27,3 +29,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/backgrounds/login_bg.jpg

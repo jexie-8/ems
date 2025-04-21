@@ -36,50 +36,51 @@ _eventNames = snapshot.docs
 
     });
   }
-  
-
   Future<void> _submitFeedback() async {
-    final user = auth.currentUser;
-    if (user == null || _selectedEventId == null) return;
+  final user = auth.currentUser;
+  if (user == null || _selectedEventId == null || _selectedEventName == null) return;
 
-    final attendeeSnap = await firestore
-        .collection("users")
-        .doc("Attendee")
-        .collection("attendees")
-        .where("email", isEqualTo: user.email)
-        .limit(1)
-        .get();
+  final attendeeSnap = await firestore
+      .collection("users")
+      .doc("Attendee")
+      .collection("attendees")
+      .where("email", isEqualTo: user.email)
+      .limit(1)
+      .get();
 
-    if (attendeeSnap.docs.isEmpty) return;
+  if (attendeeSnap.docs.isEmpty) return;
 
-    final userData = attendeeSnap.docs.first.data();
+  final userData = attendeeSnap.docs.first.data();
 
-    await firestore
-        .collection("events")
-        .doc(_selectedEventId)
-        .collection("feedback")
-        .add({
-      "email": user.email,
-      "firstName": userData["firstName"],
-      "lastName": userData["lastName"],
-      "number": userData["number"],
-      "rating": _rating,
-      "feedback": _commentController.text.trim(),
-      "submittedAt": Timestamp.now(),
-    });
+  final reportId = "$_selectedEventId, $_selectedEventName";
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Thank you for your FeedBack, it means alot!!")),
-    );
+  await firestore
+      .collection("report")
+      .doc(reportId)
+      .collection("feedback")
+      .add({
+        "email": user.email,
+        "firstName": userData["firstName"],
+        "lastName": userData["lastName"],
+        "number": userData["number"],
+        "rating": _rating,
+        "feedback": _commentController.text.trim(),
+        "submittedAt": Timestamp.now(),
+      });
 
-    setState(() {
-      _selectedEventId = null;
-      _selectedEventName = null;
-      _rating = 0;
-      _commentController.clear();
-    });
-    Navigator.pop(context);
-  }
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Thank you for your FeedBack, it means a lot!")),
+  );
+
+  setState(() {
+    _selectedEventId = null;
+    _selectedEventName = null;
+    _rating = 0;
+    _commentController.clear();
+  });
+
+  Navigator.pop(context);
+}
 
   @override
   Widget build(BuildContext context) {
