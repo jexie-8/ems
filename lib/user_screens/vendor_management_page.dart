@@ -10,62 +10,64 @@ class VendorManagementPage extends StatefulWidget {
 }
 
 class _VendorManagementPageState extends State<VendorManagementPage> {
-  Map<String, List<Map<String, dynamic>>> groupedVendors = {};
+  Map<String, List<Map<String, dynamic>>> groupedVendors = {}; // key: eventTitle
+  Map<String, String> eventIds = {}; // key: eventTitle -> eventId
+  Set<String> expandedEvents = {};
 
   @override
   void initState() {
     super.initState();
-    fetchAllVendors();
+    fetchAllEventsAndVendors();
   }
 
-  Future<void> fetchAllVendors() async {
-    final vendorManagersSnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc('employees')
-        .collection('vendor_manager')
-        .get();
+  Future<void> fetchAllEventsAndVendors() async {
+    final eventsSnapshot = await FirebaseFirestore.instance.collection('events').get();
+    Map<String, List<Map<String, dynamic>>> vendorMap = {};
+    Map<String, String> idMap = {};
 
-    Map<String, List<Map<String, dynamic>>> eventVendorMap = {};
+    for (var eventDoc in eventsSnapshot.docs) {
+      final eventId = eventDoc.id;
+      final eventTitle = eventDoc['Title'] ?? 'Untitled Event';
 
-    for (var managerDoc in vendorManagersSnapshot.docs) {
-      final vendorsSnapshot =
-          await managerDoc.reference.collection('vendors').get();
+      idMap[eventTitle] = eventId;
 
-      for (var vendorDoc in vendorsSnapshot.docs) {
-        final vendorData = vendorDoc.data();
-        final eventTitle = vendorData['event_title'] ?? 'Unknown Event';
+      final vendorsSnapshot = await eventDoc.reference.collection('vendors').get();
+      final vendorDocs = vendorsSnapshot.docs.where((doc) => doc.id != '_init');
 
-        final fullData = {
-          ...vendorData,
-          'ref': vendorDoc.reference,
-          'manager_id': managerDoc.id,
-        };
+      final vendors = vendorDocs.map((v) => {
+        ...v.data(),
+        'ref': v.reference,
+        'event_id': eventId,
+        'event_title': eventTitle,
+      }).toList();
 
-        eventVendorMap.putIfAbsent(eventTitle, () => []).add(fullData);
-      }
+      vendorMap[eventTitle] = vendors;
     }
 
     setState(() {
-      groupedVendors = eventVendorMap;
+      groupedVendors = vendorMap;
+      eventIds = idMap;
     });
   }
 
   void _openForm({
-    String? managerId,
     DocumentReference? ref,
     Map<String, dynamic>? data,
+    required String eventTitle,
+    required String eventId,
   }) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => VendorFormPage(
-          vendorManagerId: managerId ?? '',
           vendorRef: ref,
           vendorData: data,
+          eventTitle: eventTitle,
+          eventId: eventId,
         ),
       ),
     );
-    fetchAllVendors(); // Refresh list after form
+    fetchAllEventsAndVendors();
   }
 
   @override
@@ -75,92 +77,98 @@ class _VendorManagementPageState extends State<VendorManagementPage> {
         title: const Text("Vendor Management"),
         backgroundColor: Colors.deepPurple,
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.deepPurple,
-        child: const Icon(Icons.add),
-        onPressed: () {
-          if (groupedVendors.isNotEmpty) {
-            final firstGroup = groupedVendors.entries.first.value;
-            _openForm(managerId: firstGroup.first['manager_id']);
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("No vendor managers available.")),
-            );
-          }
-        },
-      ),
-      body: groupedVendors.isEmpty
+      body: eventIds.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              children: groupedVendors.entries.map((entry) {
+              children: eventIds.entries.map((entry) {
                 final eventTitle = entry.key;
-                final vendors = entry.value;
+                final eventId = entry.value;
+                final vendors = groupedVendors[eventTitle] ?? [];
+                final isExpanded = expandedEvents.contains(eventTitle);
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      child: Text(
-                        eventTitle,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple,
+                return Card(
+                  elevation: 4,
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Column(
+                    children: [
+                      ListTile(
+                        title: Text(
+                          eventTitle,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.add, color: Colors.green),
+                              onPressed: () {
+                                _openForm(
+                                  eventTitle: eventTitle,
+                                  eventId: eventId,
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  if (isExpanded) {
+                                    expandedEvents.remove(eventTitle);
+                                  } else {
+                                    expandedEvents.add(eventTitle);
+                                  }
+                                });
+                              },
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    ...vendors.map((vendor) => Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          child: Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '${vendor['first_name']} ${vendor['last_name']}',
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold),
+                      if (isExpanded)
+                        (vendors.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.only(bottom: 12),
+                                child: Text("No vendors yet."),
+                              )
+                            : Column(
+                                children: vendors.map((vendor) => Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      child: Card(
+                                        elevation: 2,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: ListTile(
+                                          title: Text(
+                                            vendor['vendor_name'] ?? 'Unnamed',
+                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                          subtitle: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text('Type: ${vendor['type']}'),
+                                              Text('Phone: ${vendor['phone_num']}'),
+                                              Text('Cost: ${vendor['cost']} EGP'),
+                                              Text('Contract: ${vendor['contract_details']}'),
+                                              Text('Availability: ${vendor['availability']}'),
+                                              Text('Payment Status: ${vendor['payment_status']}'),
+                                            ],
+                                          ),
+                                          onTap: () {
+                                            _openForm(
+                                              ref: vendor['ref'],
+                                              data: vendor,
+                                              eventTitle: eventTitle,
+                                              eventId: eventId,
+                                            );
+                                          },
+                                        ),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(Icons.edit,
-                                            color: Colors.deepPurple),
-                                        onPressed: () {
-                                          _openForm(
-                                            managerId: vendor['manager_id'],
-                                            ref: vendor['ref'],
-                                            data: vendor,
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  Text('Type: ${vendor['type']}'),
-                                  Text('Phone: ${vendor['phone_num']}'),
-                                  Text('Cost: ${vendor['cost']} EGP'),
-                                  Text(
-                                      'Contract: ${vendor['contract_details']}'),
-                                  Text('Availability: ${vendor['availability']}'),
-                                  Text(
-                                      'Payment Status: ${vendor['payment_status']}'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        )),
-                  ],
+                                    )).toList(),
+                              ))
+                    ],
+                  ),
                 );
               }).toList(),
             ),

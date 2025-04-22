@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../ticket_functionality/purchased_tickets.dart';
 import '../event_functionality/upcoming_events.dart';
 import '../login_page.dart';
-import 'feedback_page.dart'; // ✅ Import Feedback Page
+import 'feedback_page.dart'; 
 
 class AttendeeDashboardPage extends StatelessWidget {
   const AttendeeDashboardPage({super.key});
@@ -51,7 +51,7 @@ class AttendeeDashboardPage extends StatelessWidget {
               icon: Icons.feedback,
               label: 'Feedback',
               onPressed: () {
-                navigate(context, const FeedbackPage()); // ✅ Feedback page button
+                navigate(context, const FeedbackPage()); 
               },
             ),
             const SizedBox(height: 20),

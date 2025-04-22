@@ -89,24 +89,14 @@ class EventDetailsScreen extends StatelessWidget {
           await doc.reference.delete();
         }
       }
-
-      // Step 1: Delete tickets from event
-      await deleteEventSubcollection("tickets");
-
-      // Step 2: Delete feedback and payments from report
+      await deleteEventSubcollection("tickets");  
       await deleteReportSubcollection("feedback");
-      await deleteReportSubcollection("payments");
-
-      // Step 3: Delete event document
-      await eventDoc.reference.delete();
-
-      // Step 4: Delete report document
+      await deleteReportSubcollection("payments");  
+      await eventDoc.reference.delete();    
       await FirebaseFirestore.instance.collection("report").doc(reportId).delete();
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Event and all related data deleted")),
       );
-
       Navigator.of(context).pop();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -139,12 +129,6 @@ class EventDetailsScreen extends StatelessWidget {
     );
   }
 
-  String _formatBudget(dynamic budget) {
-    if (budget is num) {
-      return budget.toStringAsFixed(2);
-    }
-    return "0.00";
-  }
 
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp is Timestamp) {
@@ -188,7 +172,7 @@ class EventDetailsScreen extends StatelessWidget {
             Text("End Time: ${_formatTimestamp(event["End_DT"])}", style: labelStyle),
             Text("Max Capacity: ${event["Max_capacity"] ?? 0}", style: labelStyle),
             Text("Status: ${event["Status"] ?? "N/A"}", style: labelStyle),
-            Text("Budget: \$${_formatBudget(event["Budget"])}", style: labelStyle),
+            Text("Budget: ${event["Budget"]} EGP", style: labelStyle),
             Text("Age Rating: ${event["Age_Rating"] ?? "N/A"}", style: labelStyle),
             const SizedBox(height: 30),
 

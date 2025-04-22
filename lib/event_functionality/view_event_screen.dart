@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'event_details_screen.dart';
+import 'event_creation_webpage.dart'; // ✅ Make sure this import is correct
 
 class ViewEventsScreen extends StatefulWidget {
   const ViewEventsScreen({super.key});
@@ -74,7 +75,10 @@ class _ViewEventsScreenState extends State<ViewEventsScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => EventDetailsScreen(event: event, docID: eventDoc.id,)
+                        builder: (context) => EventDetailsScreen(
+                          event: event,
+                          docID: eventDoc.id,
+                        ),
                       ),
                     );
                   },
@@ -83,6 +87,17 @@ class _ViewEventsScreenState extends State<ViewEventsScreen> {
             },
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateEventScreen()),
+          );
+        },
+        label: const Text("Create Event"),
+        icon: const Icon(Icons.add),
+        backgroundColor: Colors.purple,
       ),
     );
   }

@@ -14,12 +14,12 @@ class SessionHandler extends StatelessWidget {
     'Attendee': ['Attendee', 'attendees'],
     'Client': ['Client', 'clients'],
     'Event_Manager': ['employees', 'event_manager'],
-    'Accountant': ['employees', 'Accountant'],
-    'Custodian': ['employees', 'Custodian'],
-    'Security_Safety': ['employees', 'Security_Safety'],
-    'Technical_Logistics': ['employees', 'Technical_Logistics'],
+    'Accountant': ['employees', 'accountants'],
+    'Custodian': ['employees', 'custodian'],
+    'Security_Safety': ['employees', 'inspectors'],
+    'Technical_Logistics': ['employees', 'technicians'],
     'Tickets_Registration': ['employees', 'ticketeers'],
-    'Vendor_Manager': ['employees', 'Vendor_Manager'],
+    'Vendor_Manager': ['employees', 'vendor_manager'],
   };
 
   Future<Widget> _handleSession() async {

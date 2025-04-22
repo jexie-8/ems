@@ -9,9 +9,9 @@ const Map<String, List<String>> roleCollections = {
     'Accountant': ['employees', 'Accountant'],
     'Custodian': ['employees', 'Custodian'],
     'Security_Safety': ['employees', 'Security_Safety'],
-    'Technical_Logistics': ['employees', 'Technical_Logistics'],
+    'Technical_Logistics': ['employees', 'technicians'],
     'Tickets_Registration': ['employees', 'ticketeers'],
-    'Vendor_Manager': ['employees', 'Vendor_Manager'],
+    'Vendor_Manager': ['employees', 'vendor_manager'],
   };
 class UserViewScreen extends StatefulWidget {
   const UserViewScreen({super.key});
@@ -263,7 +263,19 @@ void _showEditDialog(BuildContext context, Map<String, dynamic> user) {
                       .collection(path[1])
                       .doc(docId)
                       .set(userData);
-
+if (_selectedRole == "Vendor_Manager") {
+  await FirebaseFirestore.instance
+      .collection("users")
+      .doc("employees")
+      .collection("vendor_manager")
+      .doc(docId)
+      .collection("vendors")
+      .doc("_init")
+      .set({
+        "initialized": true,
+        "createdAt": FieldValue.serverTimestamp(),
+      });
+}
                   Navigator.pop(context); // close dialog
                   setState(() {}); // refresh screen
                 },

@@ -1,8 +1,7 @@
+import 'package:ems/event_functionality/view_event_screen.dart';
 import 'package:flutter/material.dart';
-import '../event_functionality/event_creation_webpage.dart'; 
 import 'user_management.dart';
 import 'vendor_management_page.dart';
-import 'vendor_form_page.dart';
 import '../login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -15,11 +14,11 @@ class EventManagerDashboard extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Logo Name'),
         backgroundColor: Colors.purpleAccent,
-        actions: [ // ✅ Added sign out button
+        actions: [ 
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await FirebaseAuth.instance.signOut(); // ✅ Sign out logic
+              await FirebaseAuth.instance.signOut();
               Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -31,43 +30,40 @@ class EventManagerDashboard extends StatelessWidget {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // The Create Event button
-            dashboardButton(context, 'Create Event'),
-            dashboardButton(context, 'View Events'),
-            dashboardButton(context, 'View Users'),
-            dashboardButton(context, 'View Vendors'),
-            dashboardButton(context, 'Send notifications'),
+          children: [ 
+            dashboardButton(context, 'Events'),
+            dashboardButton(context, 'Users'),
+            dashboardButton(context, 'Vendors'),  
           ],
         ),
       ),
     );
   }
 
-  // Updated dashboardButton function that accepts context and navigates on press
+
   Widget dashboardButton(BuildContext context, String text) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 10),
     child: ElevatedButton(
       onPressed: () {
-        if (text == 'Create Event') {
+        if (text == 'Event') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const CreateEventScreen()),
+            MaterialPageRoute(builder: (context) => const ViewEventsScreen()),
           );
-        } else if (text == 'View Users') {
+        } else if (text == 'Users') {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const UserManagementScreen()),
           );
-        } else if (text == 'View Vendors') {
+        } else if (text == 'Vendors') {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const VendorManagementPage()),
           );
         }
         
-        // Add more navigation conditions here for other buttons
+     
       },
       style: ElevatedButton.styleFrom(
         foregroundColor: Colors.deepPurple,

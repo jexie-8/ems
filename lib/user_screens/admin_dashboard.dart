@@ -1,7 +1,6 @@
 import 'package:ems/user_management/user_editor.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // ✅ Import FirebaseAuth
-import '../event_functionality/event_creation_webpage.dart'; 
+import 'package:firebase_auth/firebase_auth.dart';  
 import '../event_functionality/view_event_screen.dart';
 import '../login_page.dart';
 
@@ -14,11 +13,11 @@ class AdminDashboard extends StatelessWidget {
       appBar: AppBar(
         title: const Text('A.J.'),
         backgroundColor: Colors.purpleAccent,
-        actions: [ // ✅ Added sign out button
+        actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await FirebaseAuth.instance.signOut(); // ✅ Sign out logic
+              await FirebaseAuth.instance.signOut(); 
               Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -31,12 +30,8 @@ class AdminDashboard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            dashboardButton(context, 'Create Event'),
-            dashboardButton(context, 'View Events'),
-            dashboardButton(context, 'View Attendee'),
-            dashboardButton(context, 'View Users'),
-            dashboardButton(context, 'Manage Tickets'),
-            dashboardButton(context, 'Send notifications'),
+            dashboardButton(context, 'Events'),
+            dashboardButton(context, 'Users'),           
           ],
         ),
       ),
@@ -48,19 +43,14 @@ class AdminDashboard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: ElevatedButton(
         onPressed: () {
-          if (text == 'Create Event') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CreateEventScreen()),
-            );
-          }
-          if (text == 'View Events') {
+          
+          if (text == 'Events') {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ViewEventsScreen()),
             );
           }
-          if (text == 'View Users') {
+          if (text == 'Users') {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const UserViewScreen()),

@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class VendorFormPage extends StatefulWidget {
-  final String vendorManagerId;
   final DocumentReference? vendorRef;
   final Map<String, dynamic>? vendorData;
+  final String? eventTitle;
+  final String? eventId;
 
   const VendorFormPage({
     super.key,
-    required this.vendorManagerId,
     this.vendorRef,
     this.vendorData,
+    this.eventTitle,
+    this.eventId,
   });
 
   @override
@@ -20,8 +22,7 @@ class VendorFormPage extends StatefulWidget {
 class _VendorFormPageState extends State<VendorFormPage> {
   final _formKey = GlobalKey<FormState>();
 
-  late TextEditingController firstName;
-  late TextEditingController lastName;
+  late TextEditingController vendorName;
   late TextEditingController type;
   late TextEditingController phone;
   late TextEditingController cost;
@@ -29,37 +30,22 @@ class _VendorFormPageState extends State<VendorFormPage> {
   late TextEditingController availability;
   late TextEditingController paymentStatus;
 
-  String? selectedEventTitle;
-  List<String> eventTitles = [];
-
   @override
   void initState() {
     super.initState();
     final d = widget.vendorData ?? {};
-    firstName = TextEditingController(text: d['first_name']);
-    lastName = TextEditingController(text: d['last_name']);
+    vendorName = TextEditingController(text: d['vendor_name']);
     type = TextEditingController(text: d['type']);
     phone = TextEditingController(text: d['phone_num']);
     cost = TextEditingController(text: d['cost']);
     contractDetails = TextEditingController(text: d['contract_details']);
     availability = TextEditingController(text: d['availability']);
     paymentStatus = TextEditingController(text: d['payment_status']);
-    selectedEventTitle = d['Title'];
-
-    fetchEventTitles();
-  }
-
-  Future<void> fetchEventTitles() async {
-    final snapshot = await FirebaseFirestore.instance.collection('events').get();
-    setState(() {
-      eventTitles = snapshot.docs.map((doc) => doc['Title'] as String).toList();
-    });
   }
 
   @override
   void dispose() {
-    firstName.dispose();
-    lastName.dispose();
+    vendorName.dispose();
     type.dispose();
     phone.dispose();
     cost.dispose();
@@ -73,22 +59,19 @@ class _VendorFormPageState extends State<VendorFormPage> {
     if (!_formKey.currentState!.validate()) return;
 
     final data = {
-      'first_name': firstName.text,
-      'last_name': lastName.text,
+      'vendor_name': vendorName.text,
       'type': type.text,
       'phone_num': phone.text,
       'cost': cost.text,
       'contract_details': contractDetails.text,
       'availability': availability.text,
       'payment_status': paymentStatus.text,
-      'Title': selectedEventTitle,
+      'event_title': widget.eventTitle,
     };
 
     final vendorsCollection = FirebaseFirestore.instance
-        .collection('users')
-        .doc('employees')
-        .collection('vendor_manager')
-        .doc(widget.vendorManagerId)
+        .collection('events')
+        .doc(widget.eventId)
         .collection('vendors');
 
     if (widget.vendorRef == null) {
@@ -113,35 +96,13 @@ class _VendorFormPageState extends State<VendorFormPage> {
           key: _formKey,
           child: ListView(
             children: [
-              _buildField("First Name", firstName),
-              _buildField("Last Name", lastName),
+              _buildField("Vendor Name", vendorName),
               _buildField("Type", type),
               _buildField("Phone", phone),
               _buildField("Cost", cost),
               _buildField("Contract Details", contractDetails),
               _buildField("Availability", availability),
               _buildField("Payment Status", paymentStatus),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: selectedEventTitle,
-                decoration: const InputDecoration(
-                  labelText: 'Event',
-                  border: OutlineInputBorder(),
-                ),
-                items: eventTitles.map((title) {
-                  return DropdownMenuItem<String>(
-                    value: title,
-                    child: Text(title),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedEventTitle = value;
-                  });
-                },
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Please select an event' : null,
-              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: saveVendor,
