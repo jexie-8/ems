@@ -90,6 +90,80 @@ for (final entry in rolePaths.entries) {
       setState(() => _errorMessage = "Error: ${e.toString()}");
     }
   }
+  void _showForgotPasswordDialog() {
+  final TextEditingController _resetEmailController = TextEditingController();
+  String _dialogError = '';
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text("Reset Password"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _resetEmailController,
+                  decoration: const InputDecoration(labelText: "Enter your email"),
+                ),
+                if (_dialogError.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(_dialogError, style: const TextStyle(color: Colors.red)),
+                  )
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final email = _resetEmailController.text.trim();
+                  try {
+                    // Check if user exists in any role collection
+                    bool userExists = false;
+                    for (var path in rolePaths.values) {
+                      final snapshot = await _firestore
+                          .collection('users')
+                          .doc(path[0])
+                          .collection(path[1])
+                          .where('email', isEqualTo: email)
+                          .limit(1)
+                          .get();
+                      if (snapshot.docs.isNotEmpty) {
+                        userExists = true;
+                        break;
+                      }
+                    }
+
+                    if (!userExists) {
+                      setState(() => _dialogError = "Email not registered.");
+                      return;
+                    }
+
+                    await _auth.sendPasswordResetEmail(email: email);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Reset email sent!")),
+                    );
+                  } catch (e) {
+                    setState(() => _dialogError = "Error: ${e.toString()}");
+                  }
+                },
+                child: const Text("Send Reset Email"),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 @override
 Widget build(BuildContext context) {
   return Scaffold(
@@ -216,6 +290,14 @@ Widget build(BuildContext context) {
                                 ),
                               ),
                             ),
+                                                       TextButton(
+  onPressed: _showForgotPasswordDialog,
+  child: const Text(
+    "Forgot Password?",
+    style: TextStyle(color: Colors.white70),
+  ),
+),
+
                             const SizedBox(height: 24),
                             SizedBox(
                               width: double.infinity,
@@ -223,7 +305,7 @@ Widget build(BuildContext context) {
                               child: ElevatedButton(
                                 onPressed: _signIn,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromARGB(255, 29, 20, 69),
+                                  backgroundColor: const Color.fromARGB(255, 32, 19, 77),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
                                 child: Text(
@@ -232,6 +314,7 @@ Widget build(BuildContext context) {
                                 ),
                               ),
                             ),
+ 
                             const SizedBox(height: 12),
                             SizedBox(
                               width: double.infinity,

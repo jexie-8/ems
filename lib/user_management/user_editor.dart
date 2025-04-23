@@ -225,7 +225,19 @@ void _showEditDialog(BuildContext context, Map<String, dynamic> user) {
                     );
                     return;
                   }
-
+try {
+    // ✅ Step 1: Create Firebase Auth account
+    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email,
+      password: "12344321", // 🔐 Replace with your logic (default or generated)
+    );
+  }on FirebaseAuthException catch (e) {
+    Navigator.pop(context); // Close dialog if error
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Auth Error: ${e.message}")),
+    );
+    return;
+  }
                   final docId = "$firstName,$lastName${DateTime.now().millisecondsSinceEpoch}";
                   final path = roleCollections[_selectedRole]!;
 
@@ -262,6 +274,7 @@ if (_selectedRole == "Vendor_Manager") {
 }
                   Navigator.pop(context); // close dialog
                   setState(() {}); // refresh screen
+                  setState(() {});
                 },
                 child: const Text("Create"),
               ),
