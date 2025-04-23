@@ -46,18 +46,8 @@ class SessionHandler extends StatelessWidget {
             return const AdminDashboard();
           case "Attendee":
             return const AttendeeDashboardPage(); 
-          case "Client":
-            return const ClientDashboard();
           case "Event_Manager":
             return const EventManagerDashboard();
-          case "Accountant":
-            return const AccountantDashboard();
-          case "Custodian":
-            return const CustodianDashboard();
-          case "Security_Safety":
-            return const SecuritySafetyDashboard();
-          case "Technical_Logistics":
-            return const TechnicianDashboard();
           case "Tickets_Registration":
             return const TicketRegistrationDashboard();
           case "Vendor_Manager":

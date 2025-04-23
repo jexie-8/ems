@@ -1,11 +1,11 @@
 import 'package:ems/event_functionality/view_event_screen.dart';
 import 'package:flutter/material.dart';
-import 'user_management.dart';
+
 import 'vendor_management_page.dart';
 import 'package:ems/user_management/user_editor.dart';
 import '../login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../event_functionality/view_event_screen.dart';
+
 
 class EventManagerDashboard extends StatelessWidget {
   const EventManagerDashboard({super.key});
