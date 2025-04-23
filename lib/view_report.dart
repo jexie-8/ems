@@ -41,7 +41,6 @@ class _ReportPageState extends State<ReportPage> {
           ? const Center(child: CircularProgressIndicator())
           : Row(
               children: [
-                // Feedback Section
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -54,7 +53,6 @@ class _ReportPageState extends State<ReportPage> {
                   ),
                 ),
                 const VerticalDivider(width: 1),
-                // Payments Section
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(12),

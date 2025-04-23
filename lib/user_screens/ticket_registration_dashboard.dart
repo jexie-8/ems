@@ -11,11 +11,11 @@ class TicketRegistrationDashboard extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Tickets & Registration"),
-         actions: [ // ✅ Added sign out button
+         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await FirebaseAuth.instance.signOut(); // ✅ Sign out logic
+              await FirebaseAuth.instance.signOut(); 
               Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const LoginScreen()),

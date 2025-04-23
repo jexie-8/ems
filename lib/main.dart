@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'splash_screen.dart';
 
-// Define your Firebase configuration using FirebaseOptions
 const firebaseConfig = FirebaseOptions(
   apiKey: "AIzaSyBCesw1g_HUMdYvRqwyPc9G1brHsE_KYH4",
   authDomain: "ems-cov.firebaseapp.com",
@@ -16,7 +15,6 @@ const firebaseConfig = FirebaseOptions(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize Firebase with the FirebaseOptions
   await Firebase.initializeApp(options: firebaseConfig);
   runApp(const MyApp());
 }

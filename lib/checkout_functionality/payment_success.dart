@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';  // Import qr_flutter package
+import 'package:qr_flutter/qr_flutter.dart';
 
 class PaymentSuccessPage extends StatelessWidget {
   final String qrCodeData;
@@ -40,10 +40,8 @@ class PaymentSuccessPage extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
-
-              // Display QR code here
               QrImageView(
-                data: qrCodeData, // Correct usage with named parameter data
+                data: qrCodeData,
                 size: 200,
                 version: QrVersions.auto,),
 

@@ -86,7 +86,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       );
 
       Navigator.pop(context); 
-      Navigator.pop(context);// Go back to event details screen
+      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to update event: $e")),

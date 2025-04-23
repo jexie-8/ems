@@ -56,7 +56,7 @@ Future<void> _createEvent() async {
   final start = Timestamp.fromDate(_startDateTime!);
   final end = Timestamp.fromDate(_endDateTime!);
 
-  // ✅ Create event document
+
   await eventRef.set({
     "Event_ID": eventRef.id,
     "Client_Email": client_email,
@@ -74,7 +74,7 @@ Future<void> _createEvent() async {
 
   final reportDocRef = firestore.collection("report").doc("${eventRef.id}, $title");
 
-  // ✅ Report setup
+
   await reportDocRef.set({
     "eventId": eventRef.id,
     "eventName": title,
@@ -93,7 +93,6 @@ Future<void> _createEvent() async {
     "createdAt": Timestamp.now(),
   });
 
-  // ✅ Event subcollections: tickets, feedback, vendors
   await eventRef.collection("tickets").doc("_init").set({
     "note": "Placeholder to initialize the tickets subcollection.",
   });

@@ -10,8 +10,8 @@ class VendorManagementPage extends StatefulWidget {
 }
 
 class _VendorManagementPageState extends State<VendorManagementPage> {
-  Map<String, List<Map<String, dynamic>>> groupedVendors = {}; // key: eventTitle
-  Map<String, String> eventIds = {}; // key: eventTitle -> eventId
+  Map<String, List<Map<String, dynamic>>> groupedVendors = {};
+  Map<String, String> eventIds = {}; 
   Set<String> expandedEvents = {};
 
   @override

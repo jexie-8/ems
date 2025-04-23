@@ -26,7 +26,7 @@ class _UpcomingEventsPageState extends State<UpcomingEventsPage> {
    
     final snapshot = await FirebaseFirestore.instance
         .collection('events')
-        .where('Start_DT', isGreaterThan: now)  // Use uppercase field name
+        .where('Start_DT', isGreaterThan: now) 
         .get();
 
     final events = snapshot.docs.map((doc) {

@@ -55,14 +55,14 @@ class _CreateTicketsPageState extends State<CreateTicketsPage> {
         return;
       }
 
-      // Store ticket type metadata
+
       ticketTypeData.add({
         "type": type,
         "amount": amount,
         "price": price,
       });
 
-      // Generate actual tickets
+
       for (int i = 0; i < amount; i++) {
         final newDoc = ticketsRef.doc();
         batch.set(newDoc, {
@@ -77,10 +77,8 @@ class _CreateTicketsPageState extends State<CreateTicketsPage> {
       }
     }
 
-    // Commit ticket creation
     await batch.commit();
 
-    // Save ticketTypes array to the event document
     await FirebaseFirestore.instance
         .collection('events')
         .doc(widget.eventId)
@@ -90,7 +88,7 @@ class _CreateTicketsPageState extends State<CreateTicketsPage> {
       const SnackBar(content: Text("Tickets created and types saved successfully")),
     );
 
-    // Reset
+ 
     _typeCountController.clear();
     setState(() {
       _ticketInputs = [];

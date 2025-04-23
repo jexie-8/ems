@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'login_page.dart';
-import '/user_screens/exports.dart'; // Make sure all dashboards are exported here
+import '/user_screens/exports.dart'; 
 
 class SessionHandler extends StatelessWidget {
   
@@ -45,13 +45,13 @@ class SessionHandler extends StatelessWidget {
           case "Admin":
             return const AdminDashboard();
           case "Attendee":
-            return const AttendeeDashboardPage(); // ✅ Replace with your real screen
+            return const AttendeeDashboardPage(); 
           case "Client":
             return const ClientDashboard();
           case "Event_Manager":
             return const EventManagerDashboard();
           case "Accountant":
-            return const AccountantDashboard(); // ✅ Make sure these exist
+            return const AccountantDashboard();
           case "Custodian":
             return const CustodianDashboard();
           case "Security_Safety":
@@ -66,7 +66,7 @@ class SessionHandler extends StatelessWidget {
       }
     }
 
-    return LoginScreen(); // fallback if no role is found
+    return LoginScreen();
   }
 
   @override

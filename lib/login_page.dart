@@ -29,12 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final Map<String, List<String>> rolePaths = {
     'Admin': ['admins', 'admin_users'],
     'Attendee': ['Attendee', 'attendees'],
-    'Client': ['Client', 'clients'],
     'Event_Manager': ['employees', 'event_manager'],
-    'Accountant': ['employees', 'accountants'],
-    'Custodian': ['employees', 'Custodian'],
-    'Security_Safety': ['employees', 'inspectors'],
-    'Technical_Logistics': ['employees', 'technicians'],
     'Tickets_Registration': ['employees', 'ticketeers'],
     'Vendor_Manager': ['employees', 'vendor_manager'],
   };
@@ -58,8 +53,8 @@ for (final entry in rolePaths.entries) {
       .get();
 
   for (var doc in snapshot.docs) {
-    print("Found user: ${doc.data()}"); // prints all fields in the user document
-    print("User email: ${doc['email']}"); // optionally print just the email
+    print("Found user: ${doc.data()}"); 
+    print("User email: ${doc['email']}"); 
   }
 
   if (snapshot.docs.isNotEmpty) {
@@ -75,18 +70,12 @@ for (final entry in rolePaths.entries) {
             break;
           case "Event_Manager":
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => EventManagerDashboard()));
-            break;
-          case "Client":
-           Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ClientDashboard()));
-            break;
+            break;         
           case "Tickets_Registration":
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => TicketRegistrationDashboard()));
             break;
           case "Attendee":
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AttendeeDashboardPage()));
-            break;
-          case "Custodian":
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CustodianDashboard()));
             break;
           case "Vendor_Manager":
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => VendorManagerDashboard()));
@@ -106,17 +95,17 @@ Widget build(BuildContext context) {
   return Scaffold(
     body: Stack(
       children: [
-        // Background image
+      
         SizedBox.expand(
           child: Image.asset(
             'assets/backgrounds/login_bg.jpg',
             fit: MediaQuery.of(context).size.aspectRatio > 1
-                ? BoxFit.cover
+                ? BoxFit.fitHeight
                 : BoxFit.cover,
           ),
         ),
 
-        // Soft background blur
+    
         Positioned.fill(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
@@ -126,19 +115,19 @@ Widget build(BuildContext context) {
           ),
         ),
 
-        // Slight dark overlay for readability
+        
         Container(
           color: Colors.black.withOpacity(0.6),
         ),
 
-        // Frosted glass login form (floating & centered)
+       
         Center(
           child: SingleChildScrollView(
             child: Align(
               alignment: Alignment.center,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
-                  maxWidth: 700, // 👈 Adjust this if needed
+                  maxWidth: 700,
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),

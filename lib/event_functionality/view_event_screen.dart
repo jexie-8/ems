@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'event_details_screen.dart';
-import 'event_creation_webpage.dart'; // ✅ Make sure this import is correct
+import 'event_creation_webpage.dart'; 
 
 class ViewEventsScreen extends StatefulWidget {
   const ViewEventsScreen({super.key});

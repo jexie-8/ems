@@ -64,7 +64,7 @@ class EventDetailsScreen extends StatelessWidget {
       final eventTitle = event["Title"];
       final reportId = "$eventId, $eventTitle";
 
-      // Helper to delete event subcollections
+
       Future<void> deleteEventSubcollection(String subcollection) async {
         final subDocs = await FirebaseFirestore.instance
             .collection("events")
@@ -77,7 +77,7 @@ class EventDetailsScreen extends StatelessWidget {
         }
       }
 
-      // Helper to delete report subcollections
+
       Future<void> deleteReportSubcollection(String subcollection) async {
         final subDocs = await FirebaseFirestore.instance
             .collection("report")

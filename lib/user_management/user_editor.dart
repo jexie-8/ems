@@ -4,12 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 const Map<String, List<String>> roleCollections = {
     'Admin': ['admins', 'admin_users'],
     'Attendee': ['Attendee', 'attendees'],
-    'Client': ['Client', 'clients'],
     'Event_Manager': ['employees', 'event_manager'],
-    'Accountant': ['employees', 'Accountant'],
-    'Custodian': ['employees', 'Custodian'],
-    'Security_Safety': ['employees', 'Security_Safety'],
-    'Technical_Logistics': ['employees', 'technicians'],
     'Tickets_Registration': ['employees', 'ticketeers'],
     'Vendor_Manager': ['employees', 'vendor_manager'],
   };
@@ -27,14 +22,9 @@ class _UserViewScreenState extends State<UserViewScreen> {
 
   final List<String> _allRoles = [
     'All',
-    'Accountant',
     'Admin',
     'Attendee',
-    'Client',
-    'Custodian',
     'Event_Manager',
-    'Security_Safety',
-    'Technical_Logistics',
     'Tickets_Registration',
     'Vendor_Manager',
   ];
@@ -101,7 +91,6 @@ void _showEditDialog(BuildContext context, Map<String, dynamic> user) {
 
             if (selectedRole != "Admin" &&
                 selectedRole != "Event_Manager" &&
-                selectedRole != "Client" &&
                 selectedRole != "Attendee") {
               userData["supervisor_ID"] = user["supervisor_ID"] ?? "";
             }
@@ -140,12 +129,7 @@ void _showEditDialog(BuildContext context, Map<String, dynamic> user) {
     final rolePaths = [
       ['admins', 'admin_users'],
       ['Attendee', 'attendees'],
-      ['clients', 'client_users'],
       ['employees', 'event_manager'],
-      ['employees', 'accountants'],
-      ['employees', 'custodian'],
-      ['employees', 'inspectors'],
-      ['employees', 'technicians'],
       ['employees', 'ticketeeers'],
       ['employees', 'vendor_manager'],
     ];
@@ -296,12 +280,7 @@ if (_selectedRole == "Vendor_Manager") {
     final roleCollections = {
     'Admin': ['admins', 'admin_users'],
     'Attendee': ['Attendee', 'attendees'],
-    'Client': ['Client', 'clients'],
     'Event_Manager': ['employees', 'event_manager'],
-    'Accountant': ['employees', 'Accountant'],
-    'Custodian': ['employees', 'Custodian'],
-    'Security_Safety': ['employees', 'Security_Safety'],
-    'Technical_Logistics': ['employees', 'Technical_Logistics'],
     'Tickets_Registration': ['employees', 'ticketeers'],
     'Vendor_Manager': ['employees', 'Vendor_Manager'],
     };

@@ -18,7 +18,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _confirmPasswordController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _numberController = TextEditingController(); // 👈 NEW
+  final _numberController = TextEditingController(); 
 
   String _errorMessage = '';
   double _passwordStrength = 0;
@@ -77,7 +77,7 @@ class _SignupScreenState extends State<SignupScreen> {
           "email": user.email,
           "firstName": fName,
           "lastName": lName,
-          "number": number, // 👈 Save number
+          "number": number, 
           "role": "Attendee",
           "createdAt": FieldValue.serverTimestamp(),
         });
@@ -124,7 +124,7 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 12),
               TextField(controller: _emailController, decoration: const InputDecoration(labelText: "Email")),
               const SizedBox(height: 12),
-              TextField(controller: _numberController, decoration: const InputDecoration(labelText: "Phone Number")), // 👈 NEW
+              TextField(controller: _numberController, decoration: const InputDecoration(labelText: "Phone Number")),  
               const SizedBox(height: 12),
               TextField(
                 controller: _passwordController,

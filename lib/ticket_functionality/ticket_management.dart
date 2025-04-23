@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-// You need to create these pages
 import 'view_tickets_page.dart';
 import 'create_tickets_page.dart';
 

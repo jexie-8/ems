@@ -12,11 +12,11 @@ class VendorManagerDashboard extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Logo Name'),
         backgroundColor: Colors.purpleAccent,
-        actions: [ // ✅ Added sign out button
+        actions: [ 
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await FirebaseAuth.instance.signOut(); // ✅ Sign out logic
+              await FirebaseAuth.instance.signOut();
               Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -29,7 +29,7 @@ class VendorManagerDashboard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // The Create Event button
+           
             dashboardButton(context, 'View Vendors'),
           ],
         ),
@@ -37,7 +37,7 @@ class VendorManagerDashboard extends StatelessWidget {
     );
   }
 
-  // Updated dashboardButton function that accepts context and navigates on press
+
   Widget dashboardButton(BuildContext context, String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
