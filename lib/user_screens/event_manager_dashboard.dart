@@ -2,8 +2,10 @@ import 'package:ems/event_functionality/view_event_screen.dart';
 import 'package:flutter/material.dart';
 import 'user_management.dart';
 import 'vendor_management_page.dart';
+import 'package:ems/user_management/user_editor.dart';
 import '../login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../event_functionality/view_event_screen.dart';
 
 class EventManagerDashboard extends StatelessWidget {
   const EventManagerDashboard({super.key});
@@ -12,7 +14,7 @@ class EventManagerDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Logo Name'),
+        title: const Text('N.O.H.A'),
         backgroundColor: Colors.purpleAccent,
         actions: [ 
           IconButton(
@@ -46,7 +48,7 @@ class EventManagerDashboard extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 10),
     child: ElevatedButton(
       onPressed: () {
-        if (text == 'Event') {
+        if (text == 'Events') {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const ViewEventsScreen()),
@@ -54,7 +56,7 @@ class EventManagerDashboard extends StatelessWidget {
         } else if (text == 'Users') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const UserManagementScreen()),
+            MaterialPageRoute(builder: (context) => const UserViewScreen()),
           );
         } else if (text == 'Vendors') {
           Navigator.push(

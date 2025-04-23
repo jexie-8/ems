@@ -122,32 +122,27 @@ void _showEditDialog(BuildContext context, Map<String, dynamic> user) {
 }
 
 
-  Future<void> _getCurrentUserRole() async {
-    final email = FirebaseAuth.instance.currentUser?.email;
-    if (email == null) return;
+Future<void> _getCurrentUserRole() async {
+  final email = FirebaseAuth.instance.currentUser?.email;
+  if (email == null) return;
 
-    final rolePaths = [
-      ['admins', 'admin_users'],
-      ['Attendee', 'attendees'],
-      ['employees', 'event_manager'],
-      ['employees', 'ticketeeers'],
-      ['employees', 'vendor_manager'],
-    ];
+  for (var entry in roleCollections.entries) {
+    final path = entry.value;
+    final snapshot = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(path[0])
+        .collection(path[1])
+        .where("email", isEqualTo: email)
+        .get();
 
-    for (var path in rolePaths) {
-      final snapshot = await FirebaseFirestore.instance
-          .collection("users")
-          .doc(path[0])
-          .collection(path[1])
-          .where("email", isEqualTo: email)
-          .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        setState(() => _currentUserRole = path[1]);
-        return;
-      }
+    if (snapshot.docs.isNotEmpty) {
+      setState(() => _currentUserRole = entry.key); 
+      return;
     }
   }
+}
+
+
   void _showCreateDialog(BuildContext context) {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();

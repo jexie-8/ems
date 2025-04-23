@@ -17,12 +17,7 @@ class EventDetailsScreen extends StatelessWidget {
     final Map<String, List<String>> rolePaths = {
       'Admin': ['admins', 'admin_users'],
       'Attendee': ['Attendee', 'attendees'],
-      'Client': ['Client', 'clients'],
       'Event_Manager': ['employees', 'event_manager'],
-      'Accountant': ['employees', 'Accountant'],
-      'Custodian': ['employees', 'Custodian'],
-      'Security_Safety': ['employees', 'Security_Safety'],
-      'Technical_Logistics': ['employees', 'Technical_Logistics'],
       'Tickets_Registration': ['employees', 'ticketeers'],
       'Vendor_Manager': ['employees', 'Vendor_Manager'],
     };
