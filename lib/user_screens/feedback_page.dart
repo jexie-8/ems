@@ -23,127 +23,209 @@ class _FeedbackPageState extends State<FeedbackPage> {
   @override
   void initState() {
     super.initState();
-    _loadEvents();
+    _loadUserEvents();
   }
 
-  Future<void> _loadEvents() async {
-    final snapshot = await firestore.collection('events').get();
-    setState(() {
-      _eventIds = snapshot.docs.map((doc) => doc.id as String).toList();
-_eventNames = snapshot.docs
-    .map((doc) => doc.data()['Title']?.toString() ?? 'Untitled Event')
-    .toList();
+  Future<void> _loadUserEvents() async {
+    final user = auth.currentUser;
+    if (user == null) return;
 
+    final attendeeSnap = await firestore
+        .collection("users")
+        .doc("Attendee")
+        .collection("attendees")
+        .where("email", isEqualTo: user.email)
+        .limit(1)
+        .get();
+
+    if (attendeeSnap.docs.isEmpty) return;
+
+    final events = <String, String>{};
+
+    final eventsSnapshot = await firestore.collection("events").get();
+    for (final eventDoc in eventsSnapshot.docs) {
+      final ticketsSnap = await eventDoc.reference.collection("tickets").get();
+      for (final ticketDoc in ticketsSnap.docs) {
+        final ticketData = ticketDoc.data();
+        if (ticketData["buyerID"] == user.email) {
+          final eventTitle = eventDoc.data()["Title"]?.toString() ?? "Untitled Event";
+          events[eventDoc.id] = eventTitle;
+          break;
+        }
+      }
+    }
+
+    setState(() {
+      _eventIds = events.keys.toList();
+      _eventNames = events.values.toList();
     });
   }
+
   Future<void> _submitFeedback() async {
-  final user = auth.currentUser;
-  if (user == null || _selectedEventId == null || _selectedEventName == null) return;
+    final user = auth.currentUser;
+    if (user == null || _selectedEventId == null || _selectedEventName == null) return;
 
-  final attendeeSnap = await firestore
-      .collection("users")
-      .doc("Attendee")
-      .collection("attendees")
-      .where("email", isEqualTo: user.email)
-      .limit(1)
-      .get();
+    final attendeeSnap = await firestore
+        .collection("users")
+        .doc("Attendee")
+        .collection("attendees")
+        .where("email", isEqualTo: user.email)
+        .limit(1)
+        .get();
 
-  if (attendeeSnap.docs.isEmpty) return;
+    if (attendeeSnap.docs.isEmpty) return;
 
-  final userData = attendeeSnap.docs.first.data();
+    final userData = attendeeSnap.docs.first.data();
+    final reportId = "$_selectedEventId, $_selectedEventName";
 
-  final reportId = "$_selectedEventId, $_selectedEventName";
+    final feedbackSnap = await firestore
+        .collection("report")
+        .doc(reportId)
+        .collection("feedback")
+        .where("email", isEqualTo: user.email)
+        .limit(1)
+        .get();
 
-  await firestore
-      .collection("report")
-      .doc(reportId)
-      .collection("feedback")
-      .add({
-        "email": user.email,
-        "firstName": userData["firstName"],
-        "lastName": userData["lastName"],
-        "number": userData["number"],
-        "rating": _rating,
-        "feedback": _commentController.text.trim(),
-        "submittedAt": Timestamp.now(),
-      });
+    if (feedbackSnap.docs.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You have already submitted feedback for this event.")),
+      );
+      return;
+    }
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Thank you for your FeedBack, it means a lot!")),
-  );
+    await firestore.collection("report").doc(reportId).collection("feedback").add({
+      "email": user.email,
+      "firstName": userData["firstName"],
+      "lastName": userData["lastName"],
+      "number": userData["number"],
+      "rating": _rating,
+      "feedback": _commentController.text.trim(),
+      "submittedAt": Timestamp.now(),
+    });
 
-  setState(() {
-    _selectedEventId = null;
-    _selectedEventName = null;
-    _rating = 0;
-    _commentController.clear();
-  });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Thank you for your feedback, it means a lot!")),
+    );
 
-  Navigator.pop(context);
-}
+    setState(() {
+      _selectedEventId = null;
+      _selectedEventName = null;
+      _rating = 0;
+      _commentController.clear();
+    });
+
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Submit Feedback")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Select Event:", style: TextStyle(fontWeight: FontWeight.bold)),
-            DropdownButton<String>(
-              isExpanded: true,
-              value: _selectedEventId,
-              hint: const Text("Choose an event"),
-              items: List.generate(_eventIds.length, (index) {
-                return DropdownMenuItem(
-                  value: _eventIds[index],
-                  child: Text(_eventNames[index]),
-                );
-              }),
-              onChanged: (value) {
-                final index = _eventIds.indexOf(value!);
-                setState(() {
-                  _selectedEventId = value;
-                  _selectedEventName = _eventNames[index];
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            const Text("Rate this event (1-10):", style: TextStyle(fontWeight: FontWeight.bold)),
-            Wrap(
-              spacing: 4,
-              children: List.generate(10, (index) {
-                final starIndex = index + 1;
-                return GestureDetector(
-                  onTap: () => setState(() => _rating = starIndex),
-                  child: Icon(
-                    Icons.star,
-                    color: _rating >= starIndex ? Colors.amber : Colors.grey,
-                    size: 30,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          '🎤 Event Feedback',
+          style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.bold),
+        ),
+        iconTheme: const IconThemeData(color: Colors.deepPurple),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.purple.shade50, Colors.purple.shade100],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: ListView(
+            children: [
+              const SizedBox(height: 80),
+              const Text(
+                "Select Event:",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+              ),
+              const SizedBox(height: 8),
+              DropdownButton<String>(
+                isExpanded: true,
+                value: _selectedEventId,
+                hint: const Text("Choose an event"),
+                items: List.generate(_eventIds.length, (index) {
+                  return DropdownMenuItem(
+                    value: _eventIds[index],
+                    child: Text(_eventNames[index]),
+                  );
+                }),
+                onChanged: (value) {
+                  final index = _eventIds.indexOf(value!);
+                  setState(() {
+                    _selectedEventId = value;
+                    _selectedEventName = _eventNames[index];
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Rate the Event (1-10):",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                children: List.generate(10, (index) {
+                  final ratingValue = index + 1;
+                  return GestureDetector(
+                    onTap: () => setState(() => _rating = ratingValue),
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: _rating >= ratingValue ? Colors.deepPurple : Colors.grey.shade300,
+                      child: Text(
+                        '$ratingValue',
+                        style: TextStyle(
+                          color: _rating >= ratingValue ? Colors.white : Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Leave a Comment:",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _commentController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: "Share your experience...",
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                ),
+              ),
+              const SizedBox(height: 30),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _submitFeedback,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   ),
-                );
-              }),
-            ),
-            const SizedBox(height: 20),
-            const Text("Leave a comment (optional):", style: TextStyle(fontWeight: FontWeight.bold)),
-            TextField(
-              controller: _commentController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: "What did you think about the event?",
+                  child: const Text(
+                    "Submit Feedback",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: _submitFeedback,
-                child: const Text("Submit Feedback"),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

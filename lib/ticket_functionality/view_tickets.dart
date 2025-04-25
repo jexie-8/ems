@@ -27,14 +27,10 @@ class _TicketSelectionPageState extends State<TicketSelectionPage> {
 
   Future<void> fetchTicketData() async {
     try {
-      final eventDoc = await FirebaseFirestore.instance
-          .collection('events')
-          .doc(widget.eventId)
-          .get();
-
+      final eventDoc = await FirebaseFirestore.instance.collection('events').doc(widget.eventId).get();
       final List<dynamic> types = eventDoc.data()?['ticketTypes'] ?? [];
-      ticketTypes = types.map((e) => e['type'].toString()).toList();
 
+      ticketTypes = types.map((e) => e['type'].toString()).toList();
       for (var type in types) {
         prices[type['type']] = (type['price'] as num).toInt();
         selectedTickets[type['type']] = 0;
@@ -58,7 +54,7 @@ class _TicketSelectionPageState extends State<TicketSelectionPage> {
 
       setState(() => _loading = false);
     } catch (e) {
-      print("Error: $e");
+      print("Error fetching tickets: $e");
     }
   }
 
@@ -71,36 +67,46 @@ class _TicketSelectionPageState extends State<TicketSelectionPage> {
   }
 
   Widget buildTicketBox(String type) {
-    return Card(
-      margin: const EdgeInsets.all(12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFB39DDB), Color(0xFF9575CD)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(color: Colors.deepPurple.withOpacity(0.3), blurRadius: 10, offset: Offset(0, 5)),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(type, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                Text(prices.containsKey(type) ? '${prices[type]} EGP' : '-- EGP'),
+                Text(type, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text('${prices[type]} EGP', style: const TextStyle(fontSize: 20, color: Colors.white70)),
               ],
             ),
-            const SizedBox(height: 10),
-            Text('Available tickets: ${availableTickets[type] ?? 0}'),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
+            Text('Available: ${availableTickets[type] ?? 0}', style: const TextStyle(color: Colors.white70)),
+            const SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.remove),
+                  icon: const Icon(Icons.remove_circle_outline, color: Colors.white),
                   onPressed: selectedTickets[type]! > 0
                       ? () => setState(() => selectedTickets[type] = selectedTickets[type]! - 1)
                       : null,
                 ),
-                Text('${selectedTickets[type]}'),
+                Text('${selectedTickets[type]}', style: const TextStyle(fontSize: 20, color: Colors.white)),
                 IconButton(
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add_circle_outline, color: Colors.white),
                   onPressed: (availableTickets[type] ?? 0) > selectedTickets[type]!
                       ? () => setState(() => selectedTickets[type] = selectedTickets[type]! + 1)
                       : null,
@@ -119,29 +125,33 @@ class _TicketSelectionPageState extends State<TicketSelectionPage> {
     final userName = FirebaseAuth.instance.currentUser?.displayName ?? "Anonymous";
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Select Tickets')),
+      backgroundColor: const Color(0xFFF3E5F5),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF7E57C2),
+        elevation: 0,
+        title: const Text('Select Your Tickets', style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF7E57C2)))
           : Column(
               children: [
                 Expanded(
                   child: ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     children: ticketTypes.map(buildTicketBox).toList(),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                    borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Total: ${calculateTotal()} EGP',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
+                      Text('Total: ${calculateTotal()} EGP', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                       ElevatedButton(
                         onPressed: () {
                           bool hasTickets = selectedTickets.values.any((v) => v > 0);
@@ -151,7 +161,6 @@ class _TicketSelectionPageState extends State<TicketSelectionPage> {
                             );
                             return;
                           }
-
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -165,10 +174,11 @@ class _TicketSelectionPageState extends State<TicketSelectionPage> {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          backgroundColor: const Color(0xFF7E57C2),
+                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         ),
-                        child: const Text('Checkout'),
+                        child: const Text('Checkout', style: TextStyle(fontSize: 16, color: Colors.white)),
                       ),
                     ],
                   ),
@@ -177,4 +187,4 @@ class _TicketSelectionPageState extends State<TicketSelectionPage> {
             ),
     );
   }
-}
+} 
