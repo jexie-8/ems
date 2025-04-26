@@ -9,7 +9,9 @@ import 'payment_success.dart';
 class CardNumberInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     final digitsOnly = newValue.text.replaceAll(RegExp(r'\D'), '');
     final newString = StringBuffer();
     for (int i = 0; i < digitsOnly.length; i++) {
@@ -29,7 +31,9 @@ class CardNumberInputFormatter extends TextInputFormatter {
 class ExpiryDateInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     var text = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (text.length > 4) text = text.substring(0, 4);
     final buffer = StringBuffer();
@@ -69,14 +73,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final _cvvController = TextEditingController();
 
   Future<Map<String, dynamic>> fetchEventDetails(String eventId) async {
-    final eventSnapshot = await FirebaseFirestore.instance
-        .collection('events')
-        .doc(eventId)
-        .get();
+    final eventSnapshot =
+        await FirebaseFirestore.instance
+            .collection('events')
+            .doc(eventId)
+            .get();
     return eventSnapshot.data()!;
   }
 
-  int calculateTotal(Map<String, int> selectedTickets, Map<String, int> prices) {
+  int calculateTotal(
+    Map<String, int> selectedTickets,
+    Map<String, int> prices,
+  ) {
     int total = 0;
     selectedTickets.forEach((type, count) {
       total += (prices[type] ?? 0) * count;
@@ -84,14 +92,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return total;
   }
 
-  Future<String> generateQRCodeData(String eventTitle, String ticketType) async {
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc('Attendee')
-        .collection('attendees')
-        .where('email', isEqualTo: widget.userEmail)
-        .limit(1)
-        .get();
+  Future<String> generateQRCodeData(
+    String eventTitle,
+    String ticketType,
+  ) async {
+    final querySnapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc('Attendee')
+            .collection('attendees')
+            .where('email', isEqualTo: widget.userEmail)
+            .limit(1)
+            .get();
 
     final doc = querySnapshot.docs.isNotEmpty ? querySnapshot.docs.first : null;
     final firstName = doc?.data()['firstName'] ?? 'Unknown';
@@ -108,11 +120,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     for (var entry in widget.selectedTickets.entries) {
       if (entry.value > 0) {
-        final querySnapshot = await ticketCollection
-            .where('ticket_type', isEqualTo: entry.key)
-            .where('ticket_status', isEqualTo: 'available')
-            .limit(entry.value)
-            .get();
+        final querySnapshot =
+            await ticketCollection
+                .where('ticket_type', isEqualTo: entry.key)
+                .where('ticket_status', isEqualTo: 'available')
+                .limit(entry.value)
+                .get();
 
         int updatedCount = 0;
 
@@ -140,8 +153,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Future<void> createPaymentRecord(int totalAmount, String eventTitle) async {
     final reportId = "${widget.eventId}, $eventTitle";
-    final reportRef =
-        FirebaseFirestore.instance.collection('report').doc(reportId);
+    final reportRef = FirebaseFirestore.instance
+        .collection('report')
+        .doc(reportId);
 
     final reportSnap = await reportRef.get();
     if (!reportSnap.exists) {
@@ -151,10 +165,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     await reportRef.collection('payments').add({
       'amount': totalAmount,
-      'ticket_bought': widget.selectedTickets.entries
-          .where((e) => e.value > 0)
-          .map((e) => {'type': e.key, 'quantity': e.value})
-          .toList(),
+      'ticket_bought':
+          widget.selectedTickets.entries
+              .where((e) => e.value > 0)
+              .map((e) => {'type': e.key, 'quantity': e.value})
+              .toList(),
       'user_email': widget.userEmail,
       'event_id': widget.eventId,
       'event_title': eventTitle,
@@ -194,164 +209,259 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Checkout')),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: fetchEventDetails(widget.eventId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      backgroundColor: Color(0xFFF5F0FF),
+      appBar: AppBar(
+        title: Text('Checkout'),
+        backgroundColor: Colors.deepPurple[100],
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          // Decorative background circles
+          Positioned(
+            top: -60,
+            left: -30,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.deepPurple.withOpacity(0.1),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -60,
+            right: -30,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.deepPurple.withOpacity(0.1),
+              ),
+            ),
+          ),
+          FutureBuilder<Map<String, dynamic>>(
+            future: fetchEventDetails(widget.eventId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
 
-          final event = snapshot.data!;
-          final eventTitle = event['Title'];
+              final event = snapshot.data!;
+              final eventTitle = event['Title'];
 
-          final List ticketTypes = event['ticketTypes'] ?? [];
-          final Map<String, int> prices = {
-            for (var ticket in ticketTypes)
-              ticket['type']: (ticket['price'] as num).toInt(),
-          };
+              final List ticketTypes = event['ticketTypes'] ?? [];
+              final Map<String, int> prices = {
+                for (var ticket in ticketTypes)
+                  ticket['type']: (ticket['price'] as num).toInt(),
+              };
 
-          final total = calculateTotal(widget.selectedTickets, prices);
+              final total = calculateTotal(widget.selectedTickets, prices);
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ListView(
-              children: [
-                Text('Event Summary',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                SizedBox(height: 10),
-                Text('Title: $eventTitle'),
-                Text(
-                    'Date: ${DateFormat.yMMMd().add_jm().format(event['Start_DT'].toDate())}'),
-                Text('Description: ${event['Description']}'),
-                Divider(height: 30),
-
-                Text('Ticket Summary',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                ...widget.selectedTickets.entries.map((entry) {
-                  return entry.value > 0
-                      ? Text(
-                          '${entry.key} x ${entry.value} - ${prices[entry.key]! * entry.value} EGP')
-                      : SizedBox.shrink();
-                }).toList(),
-                Divider(height: 30),
-
-                Text('Payment Information',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                SizedBox(height: 10),
-
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _cardController,
-                        decoration: InputDecoration(
-                            labelText: 'Card Number',
-                            border: OutlineInputBorder()),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [CardNumberInputFormatter()],
-                        validator: (value) {
-                          if (value == null || !isCardNumberValid(value)) {
-                            return 'Enter a valid 16-digit card number';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 10),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _expiryController,
-                              decoration: InputDecoration(
-                                  labelText: 'Expiry Date',
-                                  hintText: 'MM/YY',
-                                  border: OutlineInputBorder()),
-                              keyboardType: TextInputType.datetime,
-                              inputFormatters: [ExpiryDateInputFormatter()],
-                              validator: (value) {
-                                if (value == null || !isExpiryValid(value)) {
-                                  return 'Invalid expiry date';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _cvvController,
-                              decoration: InputDecoration(
-                                  labelText: 'CVV',
-                                  border: OutlineInputBorder()),
-                              keyboardType: TextInputType.number,
-                              obscureText: true,
-                              maxLength: 3,
-                              validator: (value) {
-                                if (value == null || value.length != 3) {
-                                  return 'CVV must be 3 digits';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            try {
-                              await updateTicketStatusAndGenerateQRCode(
-                                  eventTitle);
-                              await createPaymentRecord(total, eventTitle);
-
-                              final selectedType = widget.selectedTickets.entries
-                                  .firstWhere((e) => e.value > 0)
-                                  .key;
-                              final qrString = await generateQRCodeData(
-                                  eventTitle, selectedType);
-
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      PaymentSuccessPage(qrCodeData: qrString),
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ListView(
+                  children: [
+                    _buildCard(
+                      title: 'Event Summary',
+                      children: [
+                        Text('Title: $eventTitle'),
+                        Text(
+                          'Date: ${DateFormat.yMMMd().add_jm().format(event['Start_DT'].toDate())}',
+                        ),
+                        Text('Description: ${event['Description']}'),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    _buildCard(
+                      title: 'Ticket Summary',
+                      children:
+                          widget.selectedTickets.entries
+                              .where((entry) => entry.value > 0)
+                              .map(
+                                (entry) => Text(
+                                  '${entry.key} x ${entry.value} - ${prices[entry.key]! * entry.value} EGP',
                                 ),
-                              );
-                              Fluttertoast.showToast(
-                                  msg: "Payment Successful!");
-                            } catch (e) {
-                              Fluttertoast.showToast(msg: "Error: $e");
-                              print("❌ Error during payment: $e");
-                            }
-                          } else {
-                            Fluttertoast.showToast(
-                                msg: "Invalid payment info");
-                          }
-                        },
-                        child: Text('Pay Now'),
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 14),
-                          textStyle: TextStyle(fontSize: 18),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                              )
+                              .toList(),
+                    ),
+                    SizedBox(height: 16),
+                    _buildCard(
+                      title: 'Payment Information',
+                      children: [
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _cardController,
+                                decoration: InputDecoration(
+                                  labelText: 'Card Number',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [CardNumberInputFormatter()],
+                                validator: (value) {
+                                  if (value == null ||
+                                      !isCardNumberValid(value)) {
+                                    return 'Enter a valid 16-digit card number';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _expiryController,
+                                      decoration: InputDecoration(
+                                        labelText: 'Expiry Date',
+                                        hintText: 'MM/YY',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      keyboardType: TextInputType.datetime,
+                                      inputFormatters: [
+                                        ExpiryDateInputFormatter(),
+                                      ],
+                                      validator: (value) {
+                                        if (value == null ||
+                                            !isExpiryValid(value)) {
+                                          return 'Invalid expiry date';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _cvvController,
+                                      decoration: InputDecoration(
+                                        labelText: 'CVV',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      obscureText: true,
+                                      // maxLength removed
+                                      validator: (value) {
+                                        if (value == null ||
+                                            value.length != 3) {
+                                          return 'CVV must be 3 digits';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                height:
+                                    60, // 👈 This makes the button area taller
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    if (_formKey.currentState!.validate()) {
+                                      try {
+                                        await updateTicketStatusAndGenerateQRCode(
+                                          eventTitle,
+                                        );
+                                        await createPaymentRecord(
+                                          total,
+                                          eventTitle,
+                                        );
+
+                                        final selectedType =
+                                            widget.selectedTickets.entries
+                                                .firstWhere((e) => e.value > 0)
+                                                .key;
+                                        final qrString =
+                                            await generateQRCodeData(
+                                              eventTitle,
+                                              selectedType,
+                                            );
+
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) => PaymentSuccessPage(
+                                                  qrCodeData: qrString,
+                                                ),
+                                          ),
+                                        );
+                                        Fluttertoast.showToast(
+                                          msg: "Payment Successful!",
+                                        );
+                                      } catch (e) {
+                                        Fluttertoast.showToast(
+                                          msg: "Error: $e",
+                                        );
+                                      }
+                                    } else {
+                                      Fluttertoast.showToast(
+                                        msg: "Invalid payment info",
+                                      );
+                                    }
+                                  },
+                                  child: Text(
+                                    'Pay Now',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCard({required String title, required List<Widget> children}) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: EdgeInsets.symmetric(vertical: 8),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-          );
-        },
+            SizedBox(height: 10),
+            ...children,
+          ],
+        ),
       ),
     );
   }

@@ -11,7 +11,7 @@ class VendorManagementPage extends StatefulWidget {
 
 class _VendorManagementPageState extends State<VendorManagementPage> {
   Map<String, List<Map<String, dynamic>>> groupedVendors = {};
-  Map<String, String> eventIds = {}; 
+  Map<String, String> eventIds = {};
   Set<String> expandedEvents = {};
 
   @override
@@ -73,105 +73,162 @@ class _VendorManagementPageState extends State<VendorManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE6E0F8),
       appBar: AppBar(
-        title: const Text("Vendor Management"),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: const Color.fromARGB(255, 32, 19, 77),
+        elevation: 0,
+        centerTitle: true,
+        title: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Colors.purpleAccent, Colors.white],
+          ).createShader(bounds),
+          child: const Text(
+            'Vendor Management',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              fontStyle: FontStyle.italic,
+              color: Colors.white,
+              letterSpacing: 2,
+            ),
+          ),
+        ),
       ),
-      body: eventIds.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              children: eventIds.entries.map((entry) {
-                final eventTitle = entry.key;
-                final eventId = entry.value;
-                final vendors = groupedVendors[eventTitle] ?? [];
-                final isExpanded = expandedEvents.contains(eventTitle);
+      body: Stack(
+        children: [
+          // Background decorative circles
+          Positioned(
+            top: -80,
+            left: -60,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -80,
+            right: -60,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                color: Colors.purpleAccent.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          // Main content
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: eventIds.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
+                    children: eventIds.entries.map((entry) {
+                      final eventTitle = entry.key;
+                      final eventId = entry.value;
+                      final vendors = groupedVendors[eventTitle] ?? [];
+                      final isExpanded = expandedEvents.contains(eventTitle);
 
-                return Card(
-                  elevation: 4,
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        title: Text(
-                          eventTitle,
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      return Card(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        elevation: 6,
+                        margin: const EdgeInsets.symmetric(vertical: 12),
+                        child: Column(
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.add, color: Colors.green),
-                              onPressed: () {
-                                _openForm(
-                                  eventTitle: eventTitle,
-                                  eventId: eventId,
-                                );
-                              },
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                            ListTile(
+                              title: Text(
+                                eventTitle,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color.fromARGB(255, 32, 19, 77),
+                                ),
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  if (isExpanded) {
-                                    expandedEvents.remove(eventTitle);
-                                  } else {
-                                    expandedEvents.add(eventTitle);
-                                  }
-                                });
-                              },
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                                    onPressed: () {
+                                      _openForm(eventTitle: eventTitle, eventId: eventId);
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                      color: Colors.deepPurple,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        if (isExpanded) {
+                                          expandedEvents.remove(eventTitle);
+                                        } else {
+                                          expandedEvents.add(eventTitle);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
+                            if (isExpanded)
+                              vendors.isEmpty
+                                  ? const Padding(
+                                      padding: EdgeInsets.only(bottom: 16),
+                                      child: Text("No vendors yet."),
+                                    )
+                                  : Column(
+                                      children: vendors.map((vendor) {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          child: Card(
+                                            color: Colors.white,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                            elevation: 2,
+                                            child: ListTile(
+                                              title: Text(
+                                                vendor['vendor_name'] ?? 'Unnamed',
+                                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                              subtitle: Padding(
+                                                padding: const EdgeInsets.only(top: 8),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text('Type: ${vendor['type']}'),
+                                                    Text('Phone: ${vendor['phone_num']}'),
+                                                    Text('Cost: ${vendor['cost']} EGP'),
+                                                    Text('Contract: ${vendor['contract_details']}'),
+                                                    Text('Availability: ${vendor['availability']}'),
+                                                    Text('Payment Status: ${vendor['payment_status']}'),
+                                                  ],
+                                                ),
+                                              ),
+                                              onTap: () {
+                                                _openForm(
+                                                  ref: vendor['ref'],
+                                                  data: vendor,
+                                                  eventTitle: eventTitle,
+                                                  eventId: eventId,
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
                           ],
                         ),
-                      ),
-                      if (isExpanded)
-                        (vendors.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.only(bottom: 12),
-                                child: Text("No vendors yet."),
-                              )
-                            : Column(
-                                children: vendors.map((vendor) => Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                      child: Card(
-                                        elevation: 2,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: ListTile(
-                                          title: Text(
-                                            vendor['vendor_name'] ?? 'Unnamed',
-                                            style: const TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                          subtitle: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text('Type: ${vendor['type']}'),
-                                              Text('Phone: ${vendor['phone_num']}'),
-                                              Text('Cost: ${vendor['cost']} EGP'),
-                                              Text('Contract: ${vendor['contract_details']}'),
-                                              Text('Availability: ${vendor['availability']}'),
-                                              Text('Payment Status: ${vendor['payment_status']}'),
-                                            ],
-                                          ),
-                                          onTap: () {
-                                            _openForm(
-                                              ref: vendor['ref'],
-                                              data: vendor,
-                                              eventTitle: eventTitle,
-                                              eventId: eventId,
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    )).toList(),
-                              ))
-                    ],
+                      );
+                    }).toList(),
                   ),
-                );
-              }).toList(),
-            ),
+          ),
+        ],
+      ),
     );
   }
 }

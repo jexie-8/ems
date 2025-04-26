@@ -13,6 +13,7 @@ const firebaseConfig = FirebaseOptions(
   measurementId: "G-K33F18PXJD",
 );
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: firebaseConfig);
@@ -28,9 +29,14 @@ class MyApp extends StatelessWidget {
       title: 'N.O.H.A',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFFE6E0F8), // Light purple everywhere by default!
         textTheme: GoogleFonts.poppinsTextTheme(
           Theme.of(context).textTheme,
-        )
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color.fromARGB(255, 32, 19, 77), // dark purple default for all AppBars
+          iconTheme: IconThemeData(color: Colors.white), // back arrows white everywhere by default
+        ),
       ),
       home: const SessionHandler(),
     );

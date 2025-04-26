@@ -86,46 +86,110 @@ class _VendorFormPageState extends State<VendorFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE6E0F8),
       appBar: AppBar(
-        title: Text(widget.vendorRef == null ? 'Create Vendor' : 'Edit Vendor'),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              _buildField("Vendor Name", vendorName),
-              _buildField("Type", type),
-              _buildField("Phone", phone),
-              _buildField("Cost", cost),
-              _buildField("Contract Details", contractDetails),
-              _buildField("Availability", availability),
-              _buildField("Payment Status", paymentStatus),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: saveVendor,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                ),
-                child: const Text("Save Vendor"),
-              )
-            ],
+        backgroundColor: const Color.fromARGB(255, 32, 19, 77),
+        elevation: 0,
+        centerTitle: true,
+        title: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Colors.purpleAccent, Colors.white],
+          ).createShader(bounds),
+          child: Text(
+            widget.vendorRef == null ? 'Create Vendor' : 'Edit Vendor',
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              fontStyle: FontStyle.italic,
+              color: Colors.white,
+              letterSpacing: 2,
+            ),
           ),
         ),
+      ),
+      body: Stack(
+        children: [
+          // Decorative background circles
+          Positioned(
+            top: -80,
+            left: -60,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -80,
+            right: -60,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                color: Colors.purpleAccent.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 100),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                children: [
+                  _buildField("Vendor Name", vendorName),
+                  _buildField("Type", type),
+                  _buildField("Phone", phone),
+                  _buildField("Cost", cost),
+                  _buildField("Contract Details", contractDetails),
+                  _buildField("Availability", availability),
+                  _buildField("Payment Status", paymentStatus),
+                  const SizedBox(height: 30),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: saveVendor,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                      child: const Text(
+                        "Save Vendor",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildField(String label, TextEditingController controller) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(),
+          filled: true,
+          fillColor: Colors.white,
+          labelStyle: const TextStyle(color: Colors.deepPurple),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.deepPurple),
+            borderRadius: BorderRadius.circular(15),
+          ),
         ),
         validator: (val) => val == null || val.isEmpty ? 'Required' : null,
       ),
