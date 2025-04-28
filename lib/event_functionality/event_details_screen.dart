@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'edit_event_screen.dart';
 import '../ticket_functionality/view_tickets_page.dart';
 import '../view_report.dart';
+
 class EventDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> event;
   final String docID;
@@ -59,7 +60,6 @@ class EventDetailsScreen extends StatelessWidget {
       final eventTitle = event["Title"];
       final reportId = "$eventId, $eventTitle";
 
-
       Future<void> deleteEventSubcollection(String subcollection) async {
         final subDocs = await FirebaseFirestore.instance
             .collection("events")
@@ -72,7 +72,6 @@ class EventDetailsScreen extends StatelessWidget {
         }
       }
 
-
       Future<void> deleteReportSubcollection(String subcollection) async {
         final subDocs = await FirebaseFirestore.instance
             .collection("report")
@@ -84,10 +83,11 @@ class EventDetailsScreen extends StatelessWidget {
           await doc.reference.delete();
         }
       }
-      await deleteEventSubcollection("tickets");  
+
+      await deleteEventSubcollection("tickets");
       await deleteReportSubcollection("feedback");
-      await deleteReportSubcollection("payments");  
-      await eventDoc.reference.delete();    
+      await deleteReportSubcollection("payments");
+      await eventDoc.reference.delete();
       await FirebaseFirestore.instance.collection("report").doc(reportId).delete();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Event and all related data deleted")),
@@ -124,7 +124,6 @@ class EventDetailsScreen extends StatelessWidget {
     );
   }
 
-
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp is Timestamp) {
       DateTime dateTime = timestamp.toDate();
@@ -153,84 +152,124 @@ class EventDetailsScreen extends StatelessWidget {
     final TextStyle labelStyle = Theme.of(context).textTheme.bodyLarge!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(event["Title"] ?? "Event Details")),
+      backgroundColor: const Color(0xFFE6E0F8),
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 32, 19, 77),
+        title: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Colors.purpleAccent, Colors.white],
+          ).createShader(bounds),
+          child: const Text(
+            'Event Details',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              fontStyle: FontStyle.italic,
+              color: Colors.white,
+              letterSpacing: 2,
+            ),
+          ),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: ListView(
-          children: [
-            Text("Description: ${event["Description"] ?? "No Description"}", style: labelStyle),
-            const SizedBox(height: 10),
-            Text("Created by: ${event["createdBy"] ?? "Unknown"}", style: labelStyle),
-            Text("Created on: ${_formatTimestamp(event["createdAt"])}", style: labelStyle),
-            const Divider(height: 30),
-            Text("Start Time: ${_formatTimestamp(event["Start_DT"])}", style: labelStyle),
-            Text("End Time: ${_formatTimestamp(event["End_DT"])}", style: labelStyle),
-            Text("Max Capacity: ${event["Max_capacity"] ?? 0}", style: labelStyle),
-            Text("Status: ${event["Status"] ?? "N/A"}", style: labelStyle),
-            Text("Budget: ${event["Budget"]} EGP", style: labelStyle),
-            Text("Age Rating: ${event["Age_Rating"] ?? "N/A"}", style: labelStyle),
-            const SizedBox(height: 30),
-
-            FutureBuilder<String?>(
-              future: _getUserRole(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final role = snapshot.data;
-                if (role == "Admin" || role == "Event_Manager") {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.edit),
-                        label: const Text("Edit"),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => EditEventScreen(event: event, docId: docID),
-                            ),
-                          );
-                        },
-                      ),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.receipt),
-                        label: const Text("Tickets"),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ViewTicketsPage(eventId:docID),
-                            ),
-                          );
-                        },
-                      ),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.request_page_outlined),
-                        label: const Text("Report"),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 15,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
+                ),
+                width: MediaQuery.of(context).size.width * 0.8, // makes the card square-ish
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Description: ${event["Description"] ?? "No Description"}", style: labelStyle),
+                    const SizedBox(height: 10),
+                    Text("Created by: ${event["createdBy"] ?? "Unknown"}", style: labelStyle),
+                    Text("Created on: ${_formatTimestamp(event["createdAt"])}", style: labelStyle),
+                    const Divider(height: 30),
+                    Text("Start Time: ${_formatTimestamp(event["Start_DT"])}", style: labelStyle),
+                    Text("End Time: ${_formatTimestamp(event["End_DT"])}", style: labelStyle),
+                    Text("Max Capacity: ${event["Max_capacity"] ?? 0}", style: labelStyle),
+                    Text("Status: ${event["Status"] ?? "N/A"}", style: labelStyle),
+                    Text("Budget: ${event["Budget"]} EGP", style: labelStyle),
+                    Text("Age Rating: ${event["Age_Rating"] ?? "N/A"}", style: labelStyle),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40), // space between the card and the buttons
+              FutureBuilder<String?>(
+                future: _getUserRole(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final role = snapshot.data;
+                  if (role == "Admin" || role == "Event_Manager") {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.edit),
+                          label: const Text("Edit"),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
                               MaterialPageRoute(
-                                builder: (_) => ReportPage(eventId:docID),
-                            ),
-                          );
-                        },
-                      ),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.delete),
-                        label: const Text("Delete"),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                        onPressed: () => _showDeleteConfirmation(context),
-                      ),
-                    ],
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          ],
+                                builder: (_) => EditEventScreen(event: event, docId: docID),
+                              ),
+                            );
+                          },
+                        ),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.receipt),
+                          label: const Text("Tickets"),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ViewTicketsPage(eventId: docID),
+                              ),
+                            );
+                          },
+                        ),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.request_page_outlined),
+                          label: const Text("Report"),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ReportPage(eventId: docID),
+                              ),
+                            );
+                          },
+                        ),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.delete),
+                          label: const Text("Delete"),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          onPressed: () => _showDeleteConfirmation(context),
+                        ),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

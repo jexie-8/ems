@@ -20,100 +20,96 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   DateTime? _startDateTime;
   DateTime? _endDateTime;
-Future<void> _createEvent() async {
-  final title = _titleController.text.trim();
-  final description = _descriptionController.text.trim();
-  final maxCapacity = int.tryParse(_maxCapacityController.text) ?? 0;
-  final status = _statusController.text.trim();
-  final budget = _budgetController.text.trim();
-  final ageRating = _ageRatingController.text.trim();
-  final client_email = _clientEmailController.text.trim();
 
-  if (title.isEmpty ||
-      description.isEmpty ||
-      status.isEmpty ||
-      budget.isEmpty ||
-      ageRating.isEmpty ||
-      _startDateTime == null ||
-      _endDateTime == null) {
+  Future<void> _createEvent() async {
+    final title = _titleController.text.trim();
+    final description = _descriptionController.text.trim();
+    final maxCapacity = int.tryParse(_maxCapacityController.text) ?? 0;
+    final status = _statusController.text.trim();
+    final budget = _budgetController.text.trim();
+    final ageRating = _ageRatingController.text.trim();
+    final client_email = _clientEmailController.text.trim();
+
+    if (title.isEmpty ||
+        description.isEmpty ||
+        status.isEmpty ||
+        budget.isEmpty ||
+        ageRating.isEmpty ||
+        _startDateTime == null ||
+        _endDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all fields and select start/end time.")),
+      );
+      return;
+    }
+
+    if (maxCapacity <= 0 || maxCapacity > 500) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Max Capacity must be between 1 and 500.")),
+      );
+      return;
+    }
+
+    final firestore = FirebaseFirestore.instance;
+    final eventRef = firestore.collection("events").doc();
+    final user = FirebaseAuth.instance.currentUser;
+
+    final start = Timestamp.fromDate(_startDateTime!);
+    final end = Timestamp.fromDate(_endDateTime!);
+
+    await eventRef.set({
+      "Event_ID": eventRef.id,
+      "Client_Email": client_email,
+      "Title": title,
+      "Description": description,
+      "Start_DT": start,
+      "End_DT": end,
+      "Max_capacity": maxCapacity,
+      "Status": status,
+      "Budget": budget,
+      "Age_Rating": ageRating,
+      "createdBy": user?.email ?? "Unknown",
+      "createdAt": Timestamp.now(),
+    });
+
+    final reportDocRef = firestore.collection("report").doc("${eventRef.id}, $title");
+
+    await reportDocRef.set({
+      "eventId": eventRef.id,
+      "eventName": title,
+      "generatedAt": Timestamp.now(),
+      "generatedBy": user?.email ?? "Unknown",
+      "status": "awaiting_feedback",
+    });
+
+    await reportDocRef.collection("payments").doc("_init").set({
+      "initialized": true,
+      "createdAt": Timestamp.now(),
+    });
+
+    await reportDocRef.collection("feedback").doc("_init").set({
+      "initialized": true,
+      "createdAt": Timestamp.now(),
+    });
+
+    await eventRef.collection("tickets").doc("_init").set({
+      "note": "Placeholder to initialize the tickets subcollection.",
+    });
+
+    await eventRef.collection("feedback").doc("_init").set({
+      "note": "Placeholder to initialize the feedback subcollection.",
+    });
+
+    await eventRef.collection("vendors").doc("_init").set({
+      "note": "Placeholder to initialize the vendors subcollection.",
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Please fill in all fields and select start/end time.")),
+      const SnackBar(content: Text("Event Created Successfully")),
     );
-    return;
+
+    Navigator.pop(context);
   }
-
-  if (maxCapacity <= 0 || maxCapacity > 500) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Max Capacity must be between 1 and 500.")),
-    );
-    return;
-  }
-
-  final firestore = FirebaseFirestore.instance;
-  final eventRef = firestore.collection("events").doc();
-  final user = FirebaseAuth.instance.currentUser;
-
-  final start = Timestamp.fromDate(_startDateTime!);
-  final end = Timestamp.fromDate(_endDateTime!);
-
-
-  await eventRef.set({
-    "Event_ID": eventRef.id,
-    "Client_Email": client_email,
-    "Title": title,
-    "Description": description,
-    "Start_DT": start,
-    "End_DT": end,
-    "Max_capacity": maxCapacity,
-    "Status": status,
-    "Budget": budget,
-    "Age_Rating": ageRating,
-    "createdBy": user?.email ?? "Unknown",
-    "createdAt": Timestamp.now(),
-  });
-
-  final reportDocRef = firestore.collection("report").doc("${eventRef.id}, $title");
-
-
-  await reportDocRef.set({
-    "eventId": eventRef.id,
-    "eventName": title,
-    "generatedAt": Timestamp.now(),
-    "generatedBy": user?.email ?? "Unknown",
-    "status": "awaiting_feedback",
-  });
-
-  await reportDocRef.collection("payments").doc("_init").set({
-    "initialized": true,
-    "createdAt": Timestamp.now(),
-  });
-
-  await reportDocRef.collection("feedback").doc("_init").set({
-    "initialized": true,
-    "createdAt": Timestamp.now(),
-  });
-
-  await eventRef.collection("tickets").doc("_init").set({
-    "note": "Placeholder to initialize the tickets subcollection.",
-  });
-
-  await eventRef.collection("feedback").doc("_init").set({
-    "note": "Placeholder to initialize the feedback subcollection.",
-  });
-
-  await eventRef.collection("vendors").doc("_init").set({
-    "note": "Placeholder to initialize the vendors subcollection.",
-  });
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Event Created Successfully")),
-  );
-
-  Navigator.pop(context);
-}
-
-
-
 
   Future<void> _pickDateTime(bool isStart) async {
     final pickedDate = await showDatePicker(
@@ -149,60 +145,110 @@ Future<void> _createEvent() async {
     }
   }
 
+  Widget _buildTextField(String label, TextEditingController controller, {TextInputType? type}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: type,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.white,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w500),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: const BorderSide(color: Color(0xFF6A4C9C), width: 2),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Create Event")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(controller: _titleController, decoration: const InputDecoration(labelText: "Title")),
-              TextField(controller: _descriptionController, decoration: const InputDecoration(labelText: "Description")),
-              TextField(controller: _maxCapacityController, decoration: const InputDecoration(labelText: "Max Capacity"), keyboardType: TextInputType.number),
-              TextField(controller: _statusController, decoration: const InputDecoration(labelText: "Status")),
-              TextField(controller: _budgetController, decoration: const InputDecoration(labelText: "Budget")),
-              TextField(controller: _ageRatingController, decoration: const InputDecoration(labelText: "Age Rating")),
-              TextField(controller: _clientEmailController, decoration: const InputDecoration(labelText: "Client's Email")),
-              const SizedBox(height: 10),
-              Row(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: AppBar(
+        title: const Text("Create Event"),
+        backgroundColor: const Color(0xFF57419D),
+      ),
+      body: Center(
+        child: Card(
+          elevation: 8,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          margin: const EdgeInsets.all(24),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: SingleChildScrollView(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: Text(
-                      _startDateTime == null
-                          ? "Pick Start Date & Time"
-                          : "Start: ${_startDateTime.toString()}",
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.access_time),
-                    onPressed: () => _pickDateTime(true),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _endDateTime == null
-                          ? "Pick End Date & Time"
-                          : "End: ${_endDateTime.toString()}",
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.access_time),
-                    onPressed: () => _pickDateTime(false),
-                  ),
-                ],
-              ),
+                  _buildTextField("Title", _titleController),
+                  _buildTextField("Description", _descriptionController),
+                  _buildTextField("Max Capacity", _maxCapacityController, type: TextInputType.number),
+                  _buildTextField("Status", _statusController),
+                  _buildTextField("Budget", _budgetController),
+                  _buildTextField("Age Rating", _ageRatingController),
+                  _buildTextField("Client's Email", _clientEmailController),
 
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _createEvent,
-                child: const Text("Create Event"),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _startDateTime == null
+                              ? "Pick Start Date & Time"
+                              : "Start: ${_startDateTime.toString()}",
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.access_time),
+                        onPressed: () => _pickDateTime(true),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _endDateTime == null
+                              ? "Pick End Date & Time"
+                              : "End: ${_endDateTime.toString()}",
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.access_time),
+                        onPressed: () => _pickDateTime(false),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _createEvent,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6A4C9C),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      child: const Text(
+                        "Create Event",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

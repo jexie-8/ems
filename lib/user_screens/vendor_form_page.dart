@@ -141,7 +141,7 @@ class _VendorFormPageState extends State<VendorFormPage> {
               child: ListView(
                 children: [
                   _buildField("Vendor Name", vendorName),
-                  _buildField("Type", type),
+                  _buildField("Type of Vendor", type),
                   _buildField("Phone", phone),
                   _buildField("Cost", cost),
                   _buildField("Contract Details", contractDetails),

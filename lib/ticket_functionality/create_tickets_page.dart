@@ -55,13 +55,11 @@ class _CreateTicketsPageState extends State<CreateTicketsPage> {
         return;
       }
 
-
       ticketTypeData.add({
         "type": type,
         "amount": amount,
         "price": price,
       });
-
 
       for (int i = 0; i < amount; i++) {
         final newDoc = ticketsRef.doc();
@@ -88,7 +86,6 @@ class _CreateTicketsPageState extends State<CreateTicketsPage> {
       const SnackBar(content: Text("Tickets created and types saved successfully")),
     );
 
- 
     _typeCountController.clear();
     setState(() {
       _ticketInputs = [];
@@ -111,6 +108,10 @@ class _CreateTicketsPageState extends State<CreateTicketsPage> {
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: _generateTicketInputs,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6A4C9C),
+                foregroundColor: Colors.white,  // Ensure text is white
+              ),
               child: const Text("Set Ticket Types"),
             ),
             const SizedBox(height: 20),
@@ -142,6 +143,10 @@ class _CreateTicketsPageState extends State<CreateTicketsPage> {
             if (_ticketInputs.isNotEmpty)
               ElevatedButton(
                 onPressed: _createTicketsAndSaveTypes,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6A4C9C),
+                  foregroundColor: Colors.white,  // Ensure text is white
+                ),
                 child: const Text("Generate All Tickets"),
               ),
           ],
