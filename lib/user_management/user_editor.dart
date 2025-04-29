@@ -323,6 +323,9 @@ class _UserViewScreenState extends State<UserViewScreen> {
       SnackBar(content: Text("Error: ${e.toString()}")),
     );
   }
+  Navigator.pop(context);
+setState(() {});
+
 },
 
                   child: const Text("Create"),
