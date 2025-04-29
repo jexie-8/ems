@@ -255,67 +255,76 @@ class _UserViewScreenState extends State<UserViewScreen> {
                 ),
                 ElevatedButton(
                     onPressed: _isCreating ? null : () async {
-                    setState(() {
-                      _isCreating = true;
-                    });
-                    final firstName = _firstNameController.text.trim();
-                    final lastName = _lastNameController.text.trim();
-                    final email = _emailController.text.trim();
-                    final number = _numberController.text.trim();
-                    final supervisorID = _supervisorIDController.text.trim();
+  setState(() {
+    _isCreating = true;
+  });
+  final firstName = _firstNameController.text.trim();
+  final lastName = _lastNameController.text.trim();
+  final email = _emailController.text.trim();
+  final number = _numberController.text.trim();
+  final supervisorID = _supervisorIDController.text.trim();
 
-                    if (firstName.isEmpty || lastName.isEmpty || email.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Please fill required fields")),
-                      );
-                       setState(() {
-                        _isCreating = false;
-                      });
-                      return;
-                    }
+  if (firstName.isEmpty || lastName.isEmpty || email.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please fill required fields")),
+    );
+    setState(() {
+      _isCreating = false;
+    });
+    return;
+  }
 
-                    try {
-                      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                        email: email,
-                        password: "12344321", // Default password for new users
-                      );
-                    } on FirebaseAuthException catch (e) {
-                      
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Auth Error: ${e.message}")),
-                      );
-                      setState(() {
-                        _isCreating = false;
-                      });
-                      return;
-                    }
+  try {
+    // First create the Authentication user
+    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email,
+      password: "12344321", // Default password
+    );
 
-                    final docId = "$firstName,$lastName${DateTime.now().millisecondsSinceEpoch}";
-                    final path = roleCollections[_selectedRole]!;
+    // Then create in Firestore
+    final docId = "$firstName,$lastName${DateTime.now().millisecondsSinceEpoch}";
+    final path = roleCollections[_selectedRole]!;
 
-                    final userData = {
-                      "firstName": firstName,
-                      "lastName": lastName,
-                      "email": email,
-                      "number": number,
-                      "role": _selectedRole,
-                    };
+    final userData = {
+      "firstName": firstName,
+      "lastName": lastName,
+      "email": email,
+      "number": number,
+    };
 
-                    if (isEmployee) {
-                      userData["supervisor_ID"] = supervisorID;
-                    }
+    if (path[0] == "employees" && _selectedRole != "Event Manager") {
+      userData["supervisor_ID"] = supervisorID;
+    }
 
-                    await FirebaseFirestore.instance
-                        .collection("users")
-                        .doc(path[0])
-                        .collection(path[1])
-                        .doc(docId)
-                        .set(userData);
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(path[0])
+        .collection(path[1])
+        .doc(docId)
+        .set(userData);
 
-                    Navigator.pop(context);
-                    setState(() {});
-                  },
+    Navigator.pop(context); // Close the dialog only AFTER both succeed
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("User created successfully")),
+    );
+    setState(() {}); // Refresh the page
+  } on FirebaseAuthException catch (e) {
+    setState(() {
+      _isCreating = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Auth Error: ${e.message}")),
+    );
+  } catch (e) {
+    setState(() {
+      _isCreating = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error: ${e.toString()}")),
+    );
+  }
+},
+
                   child: const Text("Create"),
                 ),
               ],
