@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/services.dart';
 import 'payment_success.dart';
@@ -92,25 +91,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return total;
   }
 
-  Future<String> generateQRCodeData(
-    String eventTitle,
-    String ticketType,
-  ) async {
-    final querySnapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc('Attendee')
-            .collection('attendees')
-            .where('email', isEqualTo: widget.userEmail)
-            .limit(1)
-            .get();
-
-    final doc = querySnapshot.docs.isNotEmpty ? querySnapshot.docs.first : null;
-    final firstName = doc?.data()['firstName'] ?? 'Unknown';
-    final lastName = doc?.data()['lastName'] ?? 'User';
-
-    return "User: $firstName $lastName, Event: $eventTitle, Ticket Type: $ticketType";
-  }
+  
 
   Future<void> updateTicketStatusAndGenerateQRCode(String eventTitle) async {
     final ticketCollection = FirebaseFirestore.instance
@@ -135,7 +116,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             'payment_status': 'completed',
             'buyerID': widget.userEmail,
             'event_id': widget.eventId,
-            'QR_code': await generateQRCodeData(eventTitle, entry.key),
+            'QR_code': doc.id,
           });
           updatedCount++;
         }
@@ -380,27 +361,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                           total,
                                           eventTitle,
                                         );
-
-                                        final selectedType =
-                                            widget.selectedTickets.entries
-                                                .firstWhere((e) => e.value > 0)
-                                                .key;
-                                        final qrString =
-                                            await generateQRCodeData(
-                                              eventTitle,
-                                              selectedType,
-                                            );
-
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) => PaymentSuccessPage(
-                                                  qrCodeData: qrString,
-                                                ),
-                                          ),
-                                        );
-                                        Fluttertoast.showToast(
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const PaymentSuccessPage(
+                                            qrCodeData: 'Payment Successful',
+                                         ),
+                                        ),
+                                      );                           
+                                      Fluttertoast.showToast(
                                           msg: "Payment Successful!",
                                         );
                                       } catch (e) {

@@ -71,6 +71,7 @@ class _CreateTicketsPageState extends State<CreateTicketsPage> {
           'ticket_type': type,
           'price': price,
           'createdAt': FieldValue.serverTimestamp(),
+          'redeemed': false,
         });
       }
     }
@@ -95,7 +96,7 @@ class _CreateTicketsPageState extends State<CreateTicketsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Create Tickets")),
+      appBar: AppBar(title: const Text("Create Tickets",style: TextStyle(color: Colors.white),)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(

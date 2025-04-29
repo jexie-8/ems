@@ -217,53 +217,56 @@ class EventDetailsScreen extends StatelessWidget {
                   }
                   final role = snapshot.data;
                   if (role == "Admin" || role == "Event_Manager") {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.edit),
-                          label: const Text("Edit"),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => EditEventScreen(event: event, docId: docID),
-                              ),
-                            );
-                          },
-                        ),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.receipt),
-                          label: const Text("Tickets"),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ViewTicketsPage(eventId: docID),
-                              ),
-                            );
-                          },
-                        ),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.request_page_outlined),
-                          label: const Text("Report"),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ReportPage(eventId: docID),
-                              ),
-                            );
-                          },
-                        ),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.delete),
-                          label: const Text("Delete"),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                          onPressed: () => _showDeleteConfirmation(context),
-                        ),
-                      ],
-                    );
+                    return Wrap(
+  spacing: 12, // Horizontal space between buttons
+  runSpacing: 12, // Vertical space when buttons wrap
+  alignment: WrapAlignment.center,
+  children: [
+    ElevatedButton.icon(
+      icon: const Icon(Icons.edit),
+      label: const Text("Edit"),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EditEventScreen(event: event, docId: docID),
+          ),
+        );
+      },
+    ),
+    ElevatedButton.icon(
+      icon: const Icon(Icons.receipt),
+      label: const Text("Tickets"),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ViewTicketsPage(eventId: docID),
+          ),
+        );
+      },
+    ),
+    ElevatedButton.icon(
+      icon: const Icon(Icons.request_page_outlined),
+      label: const Text("Report"),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ReportPage(eventId: docID),
+          ),
+        );
+      },
+    ),
+    ElevatedButton.icon(
+      icon: const Icon(Icons.delete),
+      label: const Text("Delete"),
+      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+      onPressed: () => _showDeleteConfirmation(context),
+    ),
+  ],
+);
+
                   }
                   return const SizedBox.shrink();
                 },

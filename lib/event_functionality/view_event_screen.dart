@@ -40,7 +40,7 @@ class _ViewEventsScreenState extends State<ViewEventsScreen> {
         actions: [
           Row(
             children: [
-              const Text("Only mine"),
+              const Text("Only mine", style: TextStyle(color: Colors.white),),
               Checkbox(
                 value: _showOnlyMine,
                 onChanged: (val) {

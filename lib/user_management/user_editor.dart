@@ -5,9 +5,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 const Map<String, List<String>> roleCollections = {
   'Admin': ['admins', 'admin_users'],
   'Attendee': ['Attendee', 'attendees'],
-  'Event_Manager': ['employees', 'event_manager'],
-  'Tickets_Registration': ['employees', 'ticketeers'],
-  'Vendor_Manager': ['employees', 'vendor_manager'],
+  'Event Manager': ['employees', 'event_manager'],
+  'Tickteers': ['employees', 'ticketeers'],
+  'Vendor Manager': ['employees', 'vendor_manager'],
 };
 
 class UserViewScreen extends StatefulWidget {
@@ -25,9 +25,9 @@ class _UserViewScreenState extends State<UserViewScreen> {
     'All',
     'Admin',
     'Attendee',
-    'Event_Manager',
-    'Tickets_Registration',
-    'Vendor_Manager',
+    'Event Manager',
+    'Ticketeers',
+    'Vendor Manager',
   ];
 
   @override
@@ -189,6 +189,8 @@ class _UserViewScreenState extends State<UserViewScreen> {
   }
 
   void _showCreateDialog(BuildContext context) {
+    bool _isCreating = false;
+
     final _firstNameController = TextEditingController();
     final _lastNameController = TextEditingController();
     final _emailController = TextEditingController();
@@ -252,7 +254,10 @@ class _UserViewScreenState extends State<UserViewScreen> {
                   child: const Text("Cancel"),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
+                    onPressed: _isCreating ? null : () async {
+                    setState(() {
+                      _isCreating = true;
+                    });
                     final firstName = _firstNameController.text.trim();
                     final lastName = _lastNameController.text.trim();
                     final email = _emailController.text.trim();
@@ -263,6 +268,9 @@ class _UserViewScreenState extends State<UserViewScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Please fill required fields")),
                       );
+                       setState(() {
+                        _isCreating = false;
+                      });
                       return;
                     }
 
@@ -272,10 +280,14 @@ class _UserViewScreenState extends State<UserViewScreen> {
                         password: "12344321", // Default password for new users
                       );
                     } on FirebaseAuthException catch (e) {
+                      
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("Auth Error: ${e.message}")),
                       );
+                      setState(() {
+                        _isCreating = false;
+                      });
                       return;
                     }
 
@@ -318,27 +330,52 @@ class _UserViewScreenState extends State<UserViewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE6E0F8),
-      appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 32, 19, 77),
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Colors.purpleAccent, Colors.white],
-          ).createShader(bounds),
-          child: const Text(
-            'Manage Users',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              fontStyle: FontStyle.italic,
-              color: Colors.white,
-              letterSpacing: 2,
-            ),
-          ),
-        ),
+ appBar: AppBar(
+  backgroundColor: const Color.fromARGB(255, 32, 19, 77),
+  elevation: 0,
+  centerTitle: true,
+  iconTheme: const IconThemeData(color: Colors.white),
+  title: ShaderMask(
+    shaderCallback: (bounds) => const LinearGradient(
+      colors: [Colors.purpleAccent, Colors.white],
+    ).createShader(bounds),
+    child: const Text(
+      'Manage Users',
+      style: TextStyle(
+        fontSize: 26,
+        fontWeight: FontWeight.bold,
+        fontStyle: FontStyle.italic,
+        color: Colors.white,
+        letterSpacing: 2,
       ),
+    ),
+  ),
+  actions: [
+    DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        dropdownColor: Colors.grey[800],
+        value: _selectedRole,
+        icon: const Icon(Icons.filter_list, color: Colors.white),
+        style: const TextStyle(color: Colors.white), // <-- ADD THIS LINE
+        items: _allRoles.map((role) {
+          return DropdownMenuItem<String>(
+            value: role,
+            child: Text(role),
+          );
+        }).toList(),
+        onChanged: (value) {
+          if (value != null) {
+            setState(() {
+              _selectedRole = value;
+            });
+          }
+        },
+      ),
+    ),
+    const SizedBox(width: 16),
+  ],
+),
+
       body: Stack(
   children: [
     // Decorative background blobs (BEHIND everything)

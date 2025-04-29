@@ -21,35 +21,83 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   DateTime? _startDateTime;
   DateTime? _endDateTime;
 
+  bool _isCreatingEvent = false; // <-- New flag here
+
   Future<void> _createEvent() async {
-    final title = _titleController.text.trim();
-    final description = _descriptionController.text.trim();
-    final maxCapacity = int.tryParse(_maxCapacityController.text) ?? 0;
-    final status = _statusController.text.trim();
-    final budget = _budgetController.text.trim();
-    final ageRating = _ageRatingController.text.trim();
-    final client_email = _clientEmailController.text.trim();
+  setState(() {
+    _isCreatingEvent = true;
+  });
 
-    if (title.isEmpty ||
-        description.isEmpty ||
-        status.isEmpty ||
-        budget.isEmpty ||
-        ageRating.isEmpty ||
-        _startDateTime == null ||
-        _endDateTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill in all fields and select start/end time.")),
-      );
-      return;
-    }
+  final title = _titleController.text.trim();
+  final description = _descriptionController.text.trim();
+  final maxCapacity = int.tryParse(_maxCapacityController.text) ?? 0;
+  final status = _statusController.text.trim();
+  final budgetStr = _budgetController.text.trim();
+  final budget = double.tryParse(budgetStr) ?? -1; // Try parsing budget as double
+  final ageRatingStr = _ageRatingController.text.trim();
+  final ageRating = int.tryParse(ageRatingStr);
+  final clientEmail = _clientEmailController.text.trim();
 
-    if (maxCapacity <= 0 || maxCapacity > 500) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Max Capacity must be between 1 and 500.")),
-      );
-      return;
-    }
+  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
+  if (title.isEmpty ||
+      description.isEmpty ||
+      status.isEmpty ||
+      budgetStr.isEmpty ||
+      ageRatingStr.isEmpty ||
+      clientEmail.isEmpty ||
+      _startDateTime == null ||
+      _endDateTime == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please fill in all fields and select start/end time.")),
+    );
+    setState(() {
+      _isCreatingEvent = false;
+    });
+    return;
+  }
+
+  if (maxCapacity <= 0 || maxCapacity > 500) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Max Capacity must be between 1 and 500.")),
+    );
+    setState(() {
+      _isCreatingEvent = false;
+    });
+    return;
+  }
+
+  if (budget <= 0) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Budget must be a positive number.")),
+    );
+    setState(() {
+      _isCreatingEvent = false;
+    });
+    return;
+  }
+
+  if (ageRating == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Age Rating must be an integer number.")),
+    );
+    setState(() {
+      _isCreatingEvent = false;
+    });
+    return;
+  }
+
+  if (!emailRegex.hasMatch(clientEmail)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please enter a valid Client Email address.")),
+    );
+    setState(() {
+      _isCreatingEvent = false;
+    });
+    return;
+  }
+
+  try {
     final firestore = FirebaseFirestore.instance;
     final eventRef = firestore.collection("events").doc();
     final user = FirebaseAuth.instance.currentUser;
@@ -59,15 +107,15 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
     await eventRef.set({
       "Event_ID": eventRef.id,
-      "Client_Email": client_email,
+      "Client_Email": clientEmail,
       "Title": title,
       "Description": description,
       "Start_DT": start,
       "End_DT": end,
       "Max_capacity": maxCapacity,
       "Status": status,
-      "Budget": budget,
-      "Age_Rating": ageRating,
+      "Budget": budget.toStringAsFixed(2), // Save budget as string nicely
+      "Age_Rating": ageRating.toString(),
       "createdBy": user?.email ?? "Unknown",
       "createdAt": Timestamp.now(),
     });
@@ -108,8 +156,21 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       const SnackBar(content: Text("Event Created Successfully")),
     );
 
+    setState(() {
+      _isCreatingEvent = false;
+    });
+
     Navigator.pop(context);
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error creating event: $e")),
+    );
+    setState(() {
+      _isCreatingEvent = false;
+    });
   }
+}
+
 
   Future<void> _pickDateTime(bool isStart) async {
     final pickedDate = await showDatePicker(
@@ -233,17 +294,23 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _createEvent,
+                      onPressed: _isCreatingEvent ? null : _createEvent,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6A4C9C),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
-                      child: const Text(
-                        "Create Event",
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      child: _isCreatingEvent
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Text(
+                              "Create Event",
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ),
                 ],

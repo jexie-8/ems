@@ -26,7 +26,7 @@ class _TicketManagementPageState extends State<TicketManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Ticket Management")),
+      appBar: AppBar(title: const Text("Ticket Management",style: TextStyle(color: Colors.white),), ),
       body: Container(
         color: Color(0xFFF3E8FF), // Light pale lavender
         child: Stack(

@@ -63,10 +63,6 @@ class AttendeeDashboardPage extends StatelessWidget {
             ];
             final pos = shapes[index % shapes.length];
             return Positioned(
-              top: pos['top'] as double?,
-              left: pos['left'] as double?,
-              right: pos['right'] as double?,
-              bottom: pos['bottom'] as double?,
               child: Transform.rotate(
                 angle: pos['angle'] as double,
                 child: Container(
