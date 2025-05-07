@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'splash_screen.dart';
 
 const firebaseConfig = FirebaseOptions(
-  apiKey: "AIzaSyBCesw1g_HUMdYvRqwyPc9G1brHsE_KYH4",
+  apiKey: "-Censor-",
   authDomain: "ems-cov.firebaseapp.com",
   projectId: "ems-cov",
   storageBucket: "ems-cov.firebasestorage.app",
